@@ -1,0 +1,217 @@
+/*
+ * Boston College theme: light mode, maroon primary accent, gold secondary accent.
+ * Loaded after css/style.css on every page and overrides CoreUI's default purple/blue.
+ *
+ *   Maroon  #8A100B  -> --cui-primary (links, buttons, focus, active states, sidebar)
+ *   Gold    #B29D6C  -> --cui-info    (secondary highlights, active nav indicator)
+ *
+ * success / warning / danger keep their usual meanings.
+ */
+
+:root,
+[data-coreui-theme=light] {
+  color-scheme: light;
+
+  --bc-maroon: #8a100b;
+  --bc-maroon-rgb: 138, 16, 11;
+  --bc-maroon-dark: #6e0d09;
+  --bc-maroon-darker: #5c0b07;
+  --bc-gold: #b29d6c;
+  --bc-gold-rgb: 178, 157, 108;
+  --bc-gold-light: #dbcca6;
+
+  /* Primary = maroon */
+  --cui-primary: #8a100b;
+  --cui-primary-rgb: 138, 16, 11;
+  --cui-primary-text-emphasis: #5c0b07;
+  --cui-primary-bg-subtle: #f3d9d8;
+  --cui-primary-border-subtle: #e0a9a6;
+  --cui-primary-contrast: #fff;
+
+  /* Info = gold */
+  --cui-info: #b29d6c;
+  --cui-info-rgb: 178, 157, 108;
+  --cui-info-text-emphasis: #5e5132;
+  --cui-info-bg-subtle: #f2ede2;
+  --cui-info-border-subtle: #e0d6bf;
+  --cui-info-contrast: #080a0c;
+
+  /* Links & focus */
+  --cui-link-color: #8a100b;
+  --cui-link-color-rgb: 138, 16, 11;
+  --cui-link-hover-color: #6e0d09;
+  --cui-link-hover-color-rgb: 110, 13, 9;
+  --cui-focus-ring-color: rgba(138, 16, 11, 0.25);
+
+  /* Light, slightly warm neutrals */
+  --cui-body-bg: #fff;
+  --cui-body-bg-rgb: 255, 255, 255;
+  --cui-tertiary-bg: #f7f5f1;
+  --cui-tertiary-bg-rgb: 247, 245, 241;
+  --cui-highlight-bg: #f2ede2;
+}
+
+/* ---------- Buttons ---------- */
+.btn-primary {
+  --cui-btn-color: #fff;
+  --cui-btn-bg: #8a100b;
+  --cui-btn-border-color: #8a100b;
+  --cui-btn-hover-color: #fff;
+  --cui-btn-hover-bg: #750e09;
+  --cui-btn-hover-border-color: #6e0d09;
+  --cui-btn-focus-shadow-rgb: 156, 52, 48;
+  --cui-btn-active-color: #fff;
+  --cui-btn-active-bg: #6e0d09;
+  --cui-btn-active-border-color: #680c08;
+  --cui-btn-disabled-color: #fff;
+  --cui-btn-disabled-bg: #8a100b;
+  --cui-btn-disabled-border-color: #8a100b;
+}
+
+.btn-outline-primary {
+  --cui-btn-color: #8a100b;
+  --cui-btn-border-color: #8a100b;
+  --cui-btn-hover-color: #fff;
+  --cui-btn-hover-bg: #8a100b;
+  --cui-btn-hover-border-color: #8a100b;
+  --cui-btn-focus-shadow-rgb: 138, 16, 11;
+  --cui-btn-active-color: #fff;
+  --cui-btn-active-bg: #8a100b;
+  --cui-btn-active-border-color: #8a100b;
+  --cui-btn-disabled-color: #8a100b;
+  --cui-btn-disabled-border-color: #8a100b;
+}
+
+.btn-ghost-primary {
+  --cui-btn-color: #8a100b;
+  --cui-btn-hover-color: #fff;
+  --cui-btn-hover-bg: #8a100b;
+  --cui-btn-hover-border-color: #8a100b;
+  --cui-btn-focus-shadow-rgb: 138, 16, 11;
+  --cui-btn-active-color: #fff;
+  --cui-btn-active-bg: #8a100b;
+  --cui-btn-active-border-color: #8a100b;
+  --cui-btn-disabled-color: #8a100b;
+}
+
+.btn-info {
+  --cui-btn-color: #080a0c;
+  --cui-btn-bg: #b29d6c;
+  --cui-btn-border-color: #b29d6c;
+  --cui-btn-hover-color: #080a0c;
+  --cui-btn-hover-bg: #bead85;
+  --cui-btn-hover-border-color: #baa77b;
+  --cui-btn-focus-shadow-rgb: 152, 135, 93;
+  --cui-btn-active-color: #080a0c;
+  --cui-btn-active-bg: #c1b189;
+  --cui-btn-active-border-color: #baa77b;
+  --cui-btn-disabled-color: #080a0c;
+  --cui-btn-disabled-bg: #b29d6c;
+  --cui-btn-disabled-border-color: #b29d6c;
+}
+
+.btn-outline-info {
+  --cui-btn-color: #8a7444;
+  --cui-btn-border-color: #b29d6c;
+  --cui-btn-hover-color: #080a0c;
+  --cui-btn-hover-bg: #b29d6c;
+  --cui-btn-hover-border-color: #b29d6c;
+  --cui-btn-focus-shadow-rgb: 178, 157, 108;
+  --cui-btn-active-color: #080a0c;
+  --cui-btn-active-bg: #b29d6c;
+  --cui-btn-active-border-color: #b29d6c;
+  --cui-btn-disabled-color: #b29d6c;
+  --cui-btn-disabled-border-color: #b29d6c;
+}
+
+.btn-ghost-info {
+  --cui-btn-color: #8a7444;
+  --cui-btn-hover-color: #080a0c;
+  --cui-btn-hover-bg: #b29d6c;
+  --cui-btn-hover-border-color: #b29d6c;
+  --cui-btn-focus-shadow-rgb: 178, 157, 108;
+  --cui-btn-active-color: #080a0c;
+  --cui-btn-active-bg: #b29d6c;
+  --cui-btn-active-border-color: #b29d6c;
+  --cui-btn-disabled-color: #b29d6c;
+}
+
+/* ---------- Form focus states (hardcoded purple in style.css) ---------- */
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus,
+.chip-input:focus-within {
+  border-color: #c58885;
+}
+
+.form-switch .form-check-input:focus {
+  --cui-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23c58885'/%3e%3c/svg%3e");
+}
+
+.form-range::-webkit-slider-thumb:active { background-color: #dcb8b6; }
+.form-range::-moz-range-thumb:active { background-color: #dcb8b6; }
+
+/* ---------- Misc components with hardcoded purple ---------- */
+.accordion {
+  --cui-accordion-btn-active-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%235c0b07' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.callout-primary { --cui-callout-border-left-color: #8a100b; }
+.callout-info { --cui-callout-border-left-color: #b29d6c; }
+
+.link-primary:hover,
+.link-primary:focus {
+  color: rgba(110, 13, 9, var(--cui-link-opacity, 1)) !important;
+  text-decoration-color: rgba(110, 13, 9, var(--cui-link-underline-opacity, 1)) !important;
+}
+
+.border-top-primary { border-top-color: #8a100b !important; }
+.border-end-primary { border-inline-end-color: #8a100b !important; }
+.border-bottom-primary { border-bottom-color: #8a100b !important; }
+.border-start-primary { border-inline-start-color: #8a100b !important; }
+
+/* Gold text on white is low-contrast, so darken it for readability */
+.text-info { color: #8a7444 !important; }
+
+/* ---------- Sidebar: maroon with gold active indicator ---------- */
+.sidebar-dark {
+  --cui-body-color: rgba(255, 255, 255, 0.9);
+  --cui-body-bg: #8a100b;
+  --cui-emphasis-color: #fff;
+  --cui-secondary-color: rgba(255, 255, 255, 0.7);
+  --cui-secondary-bg: #6e0d09;
+  --cui-tertiary-color: rgba(255, 255, 255, 0.55);
+  --cui-tertiary-bg: rgba(0, 0, 0, 0.18);
+  --cui-border-color: rgba(255, 255, 255, 0.15);
+  --cui-sidebar-brand-bg: #6e0d09;
+}
+
+.sidebar-dark .sidebar-header {
+  background: #6e0d09;
+}
+
+.sidebar-dark .sidebar-nav {
+  --cui-sidebar-nav-title-color: #dbcca6;
+  --cui-sidebar-nav-link-active-icon-color: #dbcca6;
+  --cui-sidebar-nav-link-hover-icon-color: #dbcca6;
+}
+
+.sidebar-dark .sidebar-nav .nav-link.active {
+  box-shadow: inset 3px 0 0 #b29d6c;
+}
+
+.sidebar-dark .sidebar-footer {
+  background: #6e0d09;
+}
+
+/* ---------- Header: thin gold accent line ---------- */
+.header {
+  border-bottom: 2px solid #b29d6c !important;
+}
+
+/* Dashboard chart date range: keep the inputs the same width when flagged invalid */
+#main-chart-from.is-invalid,
+#main-chart-to.is-invalid {
+  padding-right: 0.75rem;
+  background-image: none;
+}
