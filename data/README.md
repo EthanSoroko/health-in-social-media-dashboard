@@ -11,21 +11,21 @@ data/
       posts.json                   required
       predictions.json             optional (the "Actual vs. Predicted" chart)
       test_predictions.csv         source for predictions.json (not read by the page)
-    klinefelter_syndrome/          add the same files here
+    xxy/                           add the same files here
 ```
 
 The page loads its data with `fetch`, so serve it (`python3 -m http.server`) instead of opening
 `index.html` directly.
 
-## Adding a community, for example r/klinefelter_syndrome
+## Adding a community, for example r/xxy
 
-1. Create the folder `data/subreddits/klinefelter_syndrome/`. The folder name must match `name` in step 3 exactly
+1. Create the folder `data/subreddits/xxy/`. The folder name must match `name` in step 3 exactly
    (case matters).
 2. Add `posts.json` to it, and `predictions.json` if you have model predictions (formats below).
 3. In `data/subreddits.json`, set `"ready": true` on its entry (or add an entry if it isn't listed):
 
    ```json
-   {"name": "klinefelter_syndrome", "display_name": "r/klinefelter_syndrome", "ready": true, "predictions": false}
+   {"name": "xxy", "display_name": "r/xxy", "ready": true, "predictions": false}
    ```
 
    | Field          | Meaning                                                                   |
@@ -101,9 +101,9 @@ For r/kallmann_syndrome both files were generated from the health-social-media-v
 build them. The last argument is the folder name:
 
 ```bash
-python3 scripts/build_posts_data.py /path/to/viz/index.html klinefelter_syndrome
-# needs data/subreddits/klinefelter_syndrome/test_predictions.csv (columns: text, actual_label, pred_<model>...)
-python3 scripts/build_predictions_data.py /path/to/viz/index.html klinefelter_syndrome
+python3 scripts/build_posts_data.py /path/to/viz/index.html xxy
+# needs data/subreddits/xxy/test_predictions.csv (columns: text, actual_label, pred_<model>...)
+python3 scripts/build_predictions_data.py /path/to/viz/index.html xxy
 ```
 
 Otherwise, write the JSON files in the formats above any way you like.
