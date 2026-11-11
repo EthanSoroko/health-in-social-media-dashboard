@@ -50,22 +50,6 @@
   vertical-align: baseline;
 }
 
-.post-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.5rem;
-  border-radius: 1rem;
-  background: var(--cui-tertiary-bg);
-  color: var(--cui-body-color);
-  font-size: 0.75rem;
-}
-.post-tag .swatch {
-  width: 0.55rem;
-  height: 0.55rem;
-  margin-right: 0.3rem;
-  border-radius: 50%;
-}
-
 .post-title {
   font-weight: 600;
   text-decoration: none;
@@ -97,63 +81,15 @@
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: 0.01em;
 }
 
-/* ---------- Dashboard header ---------- */
-.dashboard-header {
-  border: 0;
-  border-inline-start: 4px solid var(--bc-maroon);
-  box-shadow: 0 1px 2px rgba(8, 10, 12, 0.06);
-}
-.dashboard-header-text {
-  flex: 1 1 28rem;
-  max-width: 44rem;
-}
-.dashboard-eyebrow {
-  margin-bottom: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #8a7444; /* darkened BC gold, readable on white */
-}
-.dashboard-title {
-  margin-bottom: 0.4rem;
-  font-size: 1.85rem;
-  font-weight: 700;
-  color: var(--cui-emphasis-color);
-}
-.dashboard-lede {
-  color: var(--cui-secondary-color);
-}
-
-.dashboard-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-}
-.dashboard-stats > div {
-  padding: 0.25rem 1.25rem;
-  border-inline-start: 1px solid var(--cui-border-color);
-}
-.dashboard-stats > div:first-child {
-  border-inline-start: 0;
-  padding-inline-start: 0;
-}
-.dashboard-stats dt {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--cui-secondary-color);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.dashboard-stats dd {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: var(--cui-emphasis-color);
-  white-space: nowrap;
+/* Chart date ranges: keep the inputs the same width when flagged invalid */
+#main-chart-from.is-invalid,
+#main-chart-to.is-invalid,
+#predictions-chart-from.is-invalid,
+#predictions-chart-to.is-invalid {
+  padding-right: 0.75rem;
+  background-image: none;
 }
 
 /* ---------- Sidebar jump links to dashboard sections ---------- */
@@ -162,16 +98,10 @@
     scroll-behavior: smooth;
   }
 }
-/* Leave room above a section when jumping to it (the sticky top bar only shows on small screens) */
+/* Leave room above a section for the sticky header when jumping to it */
 #overview,
 .dashboard-section {
-  scroll-margin-top: 5rem;
-}
-@media (min-width: 992px) {
-  #overview,
-  .dashboard-section {
-    scroll-margin-top: 1.5rem;
-  }
+  scroll-margin-top: 8.5rem;
 }
 /* The section group is always open, so it doesn't need the shaded "open group" background */
 .sidebar-nav .nav-group.dashboard-sections {

@@ -12,8 +12,8 @@
  *
  * This module initializes and manages all charts on the main Dashboard page (index.html).
  * It includes:
- * - Card charts (small charts in statistic cards)
- * - Main chart (large chart showing traffic/metrics over time)
+ * - Stat cards with posts-per-year sparklines
+ * - Main chart (posts per month), poster/post type doughnuts, posts list and predictions chart
  * - Custom tooltip configuration using CoreUI's ChartJS utilities
  * - Theme-aware chart updates (responds to dark/light mode changes)
  *
@@ -27,229 +27,6 @@ Chart.defaults.plugins.tooltip.mode = 'index';
 Chart.defaults.plugins.tooltip.position = 'nearest';
 Chart.defaults.plugins.tooltip.external = coreui.ChartJS.customTooltips;
 Chart.defaults.defaultFontColor = coreui.Utils.getStyle('--cui-body-color');
-document.documentElement.addEventListener('ColorSchemeChange', () => {
-  cardChart1.data.datasets[0].pointBackgroundColor = coreui.Utils.getStyle('--cui-primary');
-  cardChart2.data.datasets[0].pointBackgroundColor = coreui.Utils.getStyle('--cui-info');
-  mainChart.options.scales.x.grid.color = coreui.Utils.getStyle('--cui-border-color-translucent');
-  mainChart.options.scales.x.ticks.color = coreui.Utils.getStyle('--cui-body-color');
-  mainChart.options.scales.y.border.color = coreui.Utils.getStyle('--cui-border-color-translucent');
-  mainChart.options.scales.y.grid.color = coreui.Utils.getStyle('--cui-border-color-translucent');
-  mainChart.options.scales.y.ticks.color = coreui.Utils.getStyle('--cui-body-color');
-  cardChart1.update();
-  cardChart2.update();
-  mainChart.update();
-});
-
-/**
- * Generates a random integer between min and max (inclusive)
- * @param {number} min - Minimum value
- * @param {number} max - Maximum value
- * @returns {number} Random integer between min and max
- */
-const random = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
-const cardChart1 = new Chart(document.getElementById('card-chart1'), {
-  type: 'line',
-  data: {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-    datasets: [{
-      label: 'My First dataset',
-      backgroundColor: 'transparent',
-      borderColor: 'rgba(255,255,255,.55)',
-      pointBackgroundColor: coreui.Utils.getStyle('--cui-primary'),
-      data: [65, 59, 84, 84, 51, 55, 40]
-    }]
-  },
-  options: {
-    plugins: {
-      legend: {
-        display: false
-      }
-    },
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        border: {
-          display: false
-        },
-        grid: {
-          display: false,
-          drawBorder: false
-        },
-        ticks: {
-          display: false
-        }
-      },
-      y: {
-        min: 30,
-        max: 89,
-        display: false,
-        grid: {
-          display: false
-        },
-        ticks: {
-          display: false
-        }
-      }
-    },
-    elements: {
-      line: {
-        borderWidth: 1,
-        tension: 0.4
-      },
-      point: {
-        radius: 4,
-        hitRadius: 10,
-        hoverRadius: 4
-      }
-    }
-  }
-});
-const cardChart2 = new Chart(document.getElementById('card-chart2'), {
-  type: 'line',
-  data: {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-    datasets: [{
-      label: 'My First dataset',
-      backgroundColor: 'transparent',
-      borderColor: 'rgba(255,255,255,.55)',
-      pointBackgroundColor: coreui.Utils.getStyle('--cui-info'),
-      data: [1, 18, 9, 17, 34, 22, 11]
-    }]
-  },
-  options: {
-    plugins: {
-      legend: {
-        display: false
-      }
-    },
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        border: {
-          display: false
-        },
-        grid: {
-          display: false,
-          drawBorder: false
-        },
-        ticks: {
-          display: false
-        }
-      },
-      y: {
-        min: -9,
-        max: 39,
-        display: false,
-        grid: {
-          display: false
-        },
-        ticks: {
-          display: false
-        }
-      }
-    },
-    elements: {
-      line: {
-        borderWidth: 1
-      },
-      point: {
-        radius: 4,
-        hitRadius: 10,
-        hoverRadius: 4
-      }
-    }
-  }
-});
-
-// eslint-disable-next-line no-unused-vars
-const cardChart3 = new Chart(document.getElementById('card-chart3'), {
-  type: 'line',
-  data: {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-    datasets: [{
-      label: 'My First dataset',
-      backgroundColor: 'rgba(255,255,255,.2)',
-      borderColor: 'rgba(255,255,255,.55)',
-      data: [78, 81, 80, 45, 34, 12, 40],
-      fill: true
-    }]
-  },
-  options: {
-    plugins: {
-      legend: {
-        display: false
-      }
-    },
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        display: false
-      },
-      y: {
-        display: false
-      }
-    },
-    elements: {
-      line: {
-        borderWidth: 2,
-        tension: 0.4
-      },
-      point: {
-        radius: 0,
-        hitRadius: 10,
-        hoverRadius: 4
-      }
-    }
-  }
-});
-
-// eslint-disable-next-line no-unused-vars
-const cardChart4 = new Chart(document.getElementById('card-chart4'), {
-  type: 'bar',
-  data: {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April'],
-    datasets: [{
-      label: 'My First dataset',
-      backgroundColor: 'rgba(255,255,255,.2)',
-      borderColor: 'rgba(255,255,255,.55)',
-      data: [78, 81, 80, 45, 34, 12, 40, 85, 65, 23, 12, 98, 34, 84, 67, 82],
-      barPercentage: 0.6
-    }]
-  },
-  options: {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false
-      }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-          drawTicks: false
-        },
-        ticks: {
-          display: false
-        }
-      },
-      y: {
-        border: {
-          display: false
-        },
-        grid: {
-          display: false,
-          drawBorder: false,
-          drawTicks: false
-        },
-        ticks: {
-          display: false
-        }
-      }
-    }
-  }
-});
-
 // ---------------------------------------------------------------------------
 // Main chart: r/kallmann_syndrome posts per month, filtered by a date range
 // (data: js/kallmann-posts-data.js)
@@ -353,11 +130,20 @@ const mainChart = new Chart(document.getElementById('main-chart'), {
   }
 });
 
+document.documentElement.addEventListener('ColorSchemeChange', () => {
+  mainChart.options.scales.x.grid.color = coreui.Utils.getStyle('--cui-border-color-translucent');
+  mainChart.options.scales.x.ticks.color = coreui.Utils.getStyle('--cui-body-color');
+  mainChart.options.scales.y.border.color = coreui.Utils.getStyle('--cui-border-color-translucent');
+  mainChart.options.scales.y.grid.color = coreui.Utils.getStyle('--cui-border-color-translucent');
+  mainChart.options.scales.y.ticks.color = coreui.Utils.getStyle('--cui-body-color');
+  mainChart.update();
+});
+
 // ---------- Date range controls (shared by the dashboard charts) ----------
 const DATA_START = parseISODate(KALLMANN_POSTS_RANGE.start);
 const DATA_END = parseISODate(KALLMANN_POSTS_RANGE.end);
-const LONG_DATE = {month: 'long', day: 'numeric', year: 'numeric'};
-const formatRange = (from, to) => `${formatDate(from, LONG_DATE)} - ${formatDate(to, LONG_DATE)}`;
+const LONG_DATE = {month: 'short', day: 'numeric', year: 'numeric'};
+const formatRange = (from, to) => `${formatDate(from, LONG_DATE)} to ${formatDate(to, LONG_DATE)}`;
 const pluralize = (count, word) => `${count.toLocaleString('en-US')} ${count === 1 ? word : `${word}s`}`;
 
 // Wires up the `<prefix>-from`, `<prefix>-to`, `<prefix>-reset` and `<prefix>-error` elements.
@@ -528,7 +314,7 @@ const updateBreakdowns = (posts, from, to) => {
   whatNote.textContent = labelTotal > posts.length ?
     `Counts labels, not posts: ${multiLabel} ${multiLabel === 1 ? 'post has' : 'posts have'} more than one post type.` :
     '';
-  breakdownSubtitle.textContent = `${formatRange(from, to)} · ${pluralize(posts.length, 'post')}`;
+  breakdownSubtitle.textContent = `${formatRange(from, to)}, ${pluralize(posts.length, 'post')}`;
 };
 
 // ---------- Posts list: 10 per page, filterable (follows the line chart's date range) ----------
@@ -548,11 +334,7 @@ for (const name of KALLMANN_WHAT_ORDER) {
   postsWhatSelect.add(new Option(name, name));
 }
 
-const postTag = (label, colors) => {
-  const tag = createElement('span', 'post-tag');
-  tag.append(swatch(colors.get(label) || NEUTRAL_COLOR), label);
-  return tag;
-};
+const postBadge = (label, variant) => createElement('span', `badge text-bg-${variant}`, label);
 
 const postItem = post => {
   const item = createElement('li', 'list-group-item py-3');
@@ -566,15 +348,15 @@ const postItem = post => {
   const meta = createElement('div', 'd-flex flex-wrap align-items-center gap-2 small text-body-secondary my-1');
   meta.append(
     createElement('span', '', formatDate(post.time, {month: 'short', day: 'numeric', year: 'numeric'})),
-    postTag(post.who, WHO_COLORS),
-    ...post.what.map(what => postTag(what, WHAT_COLORS))
+    postBadge(post.who, 'primary'),
+    ...post.what.map(what => postBadge(what, 'info'))
   );
 
   item.append(title, meta);
   if (post.snippet) {
     item.append(createElement('p', 'mb-1', post.snippet));
   }
-  item.append(createElement('div', 'small text-body-secondary', `${pluralize(post.score, 'point')} · ${pluralize(post.comments, 'comment')}`));
+  item.append(createElement('div', 'small text-body-secondary', `${pluralize(post.score, 'point')}, ${pluralize(post.comments, 'comment')}`));
   return item;
 };
 
@@ -646,7 +428,7 @@ function renderPosts() {
     [createElement('li', 'list-group-item py-4 text-center text-body-secondary', 'No posts match these filters in this date range.')]));
 
   postsPageInfo.textContent = matches.length > 0 ?
-    `Showing ${start + 1}–${start + pagePosts.length} of ${pluralize(matches.length, 'post')}` :
+    `Showing ${start + 1} to ${start + pagePosts.length} of ${pluralize(matches.length, 'post')}` :
     '';
   renderPagination(pageCount);
 }
@@ -661,7 +443,7 @@ for (const select of [postsWhoSelect, postsWhatSelect]) {
 const updatePostsList = (posts, from, to) => {
   postsState.inRange = [...posts].reverse(); // newest first
   postsState.page = 1;
-  postsSummary.textContent = `${formatRange(from, to)} · newest first`;
+  postsSummary.textContent = `${formatRange(from, to)}, newest first`;
   renderPosts();
 };
 
@@ -675,7 +457,7 @@ setupDateRange('main-chart', (from, to) => {
   // With only a month or two there's no line to speak of, so show the points
   mainChart.data.datasets[0].pointRadius = counts.length < 3 ? 4 : 0;
   mainChart.update();
-  mainChartSubtitle.textContent = `r/kallmann_syndrome, ${formatRange(from, to)} · ${pluralize(total, 'post')}`;
+  mainChartSubtitle.textContent = `r/kallmann_syndrome, ${formatRange(from, to)}, ${pluralize(total, 'post')}`;
 
   const postsInRange = kallmannPosts.filter(post => post.time >= from && post.time <= to);
   updateBreakdowns(postsInRange, from, to);
@@ -771,10 +553,14 @@ const updatePredictionsChart = () => {
   predictionsChart.data.datasets[1].data = predictedCounts;
   predictionsChart.update();
 
+  // Range and post count on one line, the model's accuracy on its own line
   const accuracy = posts.length === 0 ?
-    'no test posts in this range' :
-    `${pluralize(posts.length, 'test post')} · ${model.name} labeled ${correct} correctly (${Math.round((100 * correct) / posts.length)}%)`;
-  predictionsSubtitle.textContent = `${formatRange(from, to)} · ${accuracy}`;
+    'No test posts in this range' :
+    `${model.name}: ${correct} of ${posts.length} correct (${Math.round((100 * correct) / posts.length)}%)`;
+  predictionsSubtitle.replaceChildren(
+    createElement('div', '', `${formatRange(from, to)}, ${pluralize(posts.length, 'test post')}`),
+    createElement('div', '', accuracy)
+  );
 };
 
 predictionsModelSelect.addEventListener('change', updatePredictionsChart);
@@ -783,10 +569,96 @@ setupDateRange('predictions-chart', (from, to) => {
   updatePredictionsChart();
 });
 
-// ---------- Dashboard header stats (computed from the data files) ----------
+// ---------- Stat cards (computed from the data files) ----------
+const postsPerYear = new Map();
+for (const post of kallmannPosts) {
+  const year = new Date(post.time).getUTCFullYear();
+  postsPerYear.set(year, (postsPerYear.get(year) || 0) + 1);
+}
+const firstYear = new Date(DATA_START).getUTCFullYear();
+const lastYear = new Date(DATA_END).getUTCFullYear();
+const sparkYears = [];
+for (let year = firstYear; year <= lastYear; year++) {
+  sparkYears.push(year);
+}
+const sparkCounts = sparkYears.map(year => postsPerYear.get(year) || 0);
+const busiestIndex = sparkCounts.indexOf(Math.max(...sparkCounts));
+
 document.getElementById('stat-posts').textContent = KALLMANN_POSTS.length.toLocaleString('en-US');
-document.getElementById('stat-span').textContent = `${formatDate(DATA_START, {month: 'short', year: 'numeric'})} – ${formatDate(DATA_END, {month: 'short', year: 'numeric'})}`;
-document.getElementById('stat-test-posts').textContent = KALLMANN_PREDICTION_POSTS.length.toLocaleString('en-US');
+
+// Comment counts come with each post; fall back to the test set size if they're missing
+const hasCommentData = KALLMANN_POSTS.length > 0 && KALLMANN_POSTS.every(post => Number.isFinite(post.comments));
+document.getElementById('stat-second').textContent = hasCommentData ?
+  KALLMANN_POSTS.reduce((sum, post) => sum + post.comments, 0).toLocaleString('en-US') :
+  KALLMANN_PREDICTION_POSTS.length.toLocaleString('en-US');
+document.getElementById('stat-second-label').textContent = hasCommentData ? 'Comments' : 'Test posts';
+
+const patientPosts = KALLMANN_POSTS.filter(post => post.who === 'Patient').length;
+document.getElementById('stat-patient-share').textContent = formatPercent(patientPosts / KALLMANN_POSTS.length);
+
+document.getElementById('stat-busiest-year').textContent = String(sparkYears[busiestIndex]);
+document.getElementById('stat-busiest-year-label').textContent = `Busiest year, ${pluralize(sparkCounts[busiestIndex], 'post')}`;
+
+// Sparklines follow the CoreUI template's widget cards: line, line, area, bar.
+// Line color follows the card's text color (white on maroon, dark on gold).
+const sparkColor = (canvas, alpha) => {
+  const rgb = getComputedStyle(canvas).color.match(/\d+/g).slice(0, 3).join(', ');
+  return `rgba(${rgb}, ${alpha})`;
+};
+const sparkMax = Math.max(...sparkCounts);
+const sparkOptions = (type, fill) => ({
+  plugins: {
+    legend: {
+      display: false
+    }
+  },
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      display: false
+    },
+    y: {
+      display: false,
+      beginAtZero: true,
+      // Headroom so the line's points aren't clipped at the top of the card
+      max: type === 'line' && !fill ? sparkMax * 1.15 : undefined
+    }
+  },
+  elements: {
+    line: {
+      borderWidth: fill ? 2 : 1,
+      tension: 0.4
+    },
+    point: {
+      radius: fill ? 0 : 4,
+      hitRadius: 10,
+      hoverRadius: 4
+    }
+  }
+});
+const createSparkline = (id, type, {fill = false} = {}) => {
+  const canvas = document.getElementById(id);
+  return new Chart(canvas, {
+    type,
+    data: {
+      labels: sparkYears.map(String),
+      datasets: [{
+        label: 'Posts',
+        data: sparkCounts,
+        borderColor: sparkColor(canvas, 0.55),
+        backgroundColor: type === 'bar' || fill ? sparkColor(canvas, 0.2) : 'transparent',
+        pointBackgroundColor: sparkColor(canvas, 1),
+        fill,
+        barPercentage: 0.6
+      }]
+    },
+    options: sparkOptions(type, fill)
+  });
+};
+createSparkline('card-chart1', 'line');
+createSparkline('card-chart2', 'line');
+createSparkline('card-chart3', 'line', {fill: true});
+createSparkline('card-chart4', 'bar');
 
 // ---------- Sidebar jump links: highlight the section in view ----------
 const sectionLinks = [...document.querySelectorAll('[data-section-link]')];
@@ -795,7 +667,7 @@ const sectionTargets = sectionLinks.map(link => document.querySelector(link.getA
 const highlightCurrentSection = () => {
   // The current section is the last one whose top has scrolled past a line just below where the
   // jump links leave a section (or the last section, once the page is scrolled to the bottom).
-  const CURRENT_LINE = 120; // px from the top of the window; sections land at 24px (80px on small screens)
+  const CURRENT_LINE = 160; // px from the top of the window; sections land just below the sticky header
   const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
   let current = 0;
   for (const [index, target] of sectionTargets.entries()) {
