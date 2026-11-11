@@ -1,0 +1,13 @@
+[
+  {
+    "name": "kallmann_syndrome",
+    "display_name": "r/kallmann_syndrome",
+    "ready": true,
+    "predictions": true
+  },
+  {
+    "name": "XXY",
+    "display_name": "r/XXY",
+    "ready": false
+  }
+]

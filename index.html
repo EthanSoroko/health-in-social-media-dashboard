@@ -108,13 +108,13 @@
             <li class="nav-item">
               <a class="nav-link" href="#posts-per-month" data-section-link>
                 <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Posts per month
+                Posts per Month
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#post-breakdown" data-section-link>
                 <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Poster &amp; post types
+                Poster &amp; Post Types
               </a>
             </li>
             <li class="nav-item">
@@ -126,7 +126,13 @@
             <li class="nav-item">
               <a class="nav-link" href="#predictions" data-section-link>
                 <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Actual vs. predicted
+                Actual vs. Predicted
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#compare" data-section-link>
+                <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                Compare Communities
               </a>
             </li>
           </ul>
@@ -624,7 +630,7 @@
       </div>
     </div>
     <div class="wrapper d-flex flex-column min-vh-100">
-      <!-- Top bar: sidebar toggle and page title (breadcrumb).
+      <!-- Top bar: sidebar toggle and breadcrumb.
            The account/notification links are hidden for now (remove "d-none" to show again) -->
       <header class="header header-sticky p-0 mb-4">
         <div class="container-fluid border-bottom px-4">
@@ -743,16 +749,30 @@
         <div class="container-fluid px-4">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb my-0">
-              <li class="breadcrumb-item active" aria-current="page">Health in Social Media</li>
+              <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
             </ol>
           </nav>
         </div>
       </header>
       <div class="body flex-grow-1">
         <div class="container-lg px-4">
-          <h1 class="visually-hidden">Health in Social Media</h1>
+          <div class="card mb-4" id="overview">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div>
+                <h1 class="card-title h3 mb-1">Health in Social Media</h1>
+                <div class="text-body-secondary" id="page-subtitle">Reddit posts from rare-disease communities</div>
+              </div>
+              <div>
+                <label class="visually-hidden" for="subreddit-select">Community</label>
+                <select class="form-select" id="subreddit-select" style="width: auto" disabled>
+                  <option>Loading...</option>
+                </select>
+              </div>
+            </div>
+            <div class="alert alert-danger mx-3 mb-3 d-none" id="load-error" role="alert"></div>
+          </div>
           <!-- Stat cards: values and sparklines are computed in js/main.js from the data files -->
-          <div class="row g-4 mb-4" id="overview">
+          <div class="row g-4 mb-4">
             <div class="col-sm-6 col-xl-3">
               <div class="card text-bg-primary">
                 <div class="card-body pb-0">
@@ -807,7 +827,7 @@
             <div class="card-body">
               <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div>
-                  <h4 class="card-title mb-0">Posts per month</h4>
+                  <h4 class="card-title mb-0">Posts per Month</h4>
                   <div class="small text-body-secondary" id="main-chart-subtitle">r/kallmann_syndrome</div>
                 </div>
                 <div class="d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Chart controls">
@@ -828,12 +848,12 @@
             </div>
             <div class="card-body border-top dashboard-section" id="post-breakdown">
               <div class="d-flex flex-wrap align-items-baseline gap-2 mb-3">
-                <h5 class="mb-0">Who is posting, and what kind of post</h5>
+                <h5 class="mb-0">Who Is Posting, and What Kind of Post</h5>
                 <span class="small text-body-secondary" id="breakdown-subtitle"></span>
               </div>
               <div class="row g-4">
                 <div class="col-lg-6">
-                  <h6 class="text-body-secondary">Poster type</h6>
+                  <h6 class="text-body-secondary">Poster Type</h6>
                   <div class="d-flex flex-wrap align-items-center gap-4">
                     <div class="breakdown-donut">
                       <canvas id="who-chart" aria-describedby="who-legend"></canvas>
@@ -843,7 +863,7 @@
                   </div>
                 </div>
                 <div class="col-lg-6">
-                  <h6 class="text-body-secondary">Post type</h6>
+                  <h6 class="text-body-secondary">Post Type</h6>
                   <div class="d-flex flex-wrap align-items-center gap-4">
                     <div class="breakdown-donut">
                       <canvas id="what-chart" aria-describedby="what-legend"></canvas>
@@ -887,10 +907,10 @@
             <div class="card-body">
               <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div>
-                  <h4 class="card-title mb-0">Post categories: actual vs. predicted</h4>
-                  <div class="small text-body-secondary" id="predictions-chart-subtitle">Test set</div>
+                  <h4 class="card-title mb-0">Post Categories: Actual vs. Predicted</h4>
+                  <div class="small text-body-secondary" id="predictions-chart-subtitle"></div>
                 </div>
-                <div class="d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Prediction chart controls">
+                <div class="d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Prediction chart controls" id="predictions-controls">
                   <label class="visually-hidden" for="predictions-chart-model">Model</label>
                   <select class="form-select" id="predictions-chart-model" style="width: auto"></select>
                   <div class="d-flex align-items-center gap-2">
@@ -903,10 +923,21 @@
                   </div>
                 </div>
               </div>
-              <div class="invalid-feedback d-block text-end" id="predictions-chart-error" style="min-height: 1.25rem"></div>
-              <div class="c-chart-wrapper" style="height: 300px; margin-top: 20px">
-                <canvas class="chart" id="predictions-chart" height="300"></canvas>
+              <div id="predictions-content">
+                <div class="invalid-feedback d-block text-end" id="predictions-chart-error" style="min-height: 1.25rem"></div>
+                <div class="c-chart-wrapper" style="height: 300px; margin-top: 20px">
+                  <canvas class="chart" id="predictions-chart" height="300"></canvas>
+                </div>
               </div>
+              <p class="text-body-secondary mt-3 mb-0 d-none" id="predictions-empty">No model predictions for this community yet.</p>
+            </div>
+          </div>
+          <!-- /.card-->
+          <div class="card mb-4 dashboard-section" id="compare">
+            <div class="card-body">
+              <h4 class="card-title mb-0">Compare Communities</h4>
+              <div class="small text-body-secondary mb-3">Share of each community's posts</div>
+              <div id="compare-content"></div>
             </div>
           </div>
           <!-- /.card-->
@@ -2237,8 +2268,6 @@
     <script src="vendors/chart.js/js/chart.umd.js"></script>
     <script src="vendors/@coreui/chartjs/js/coreui-chartjs.js"></script>
     <script src="vendors/@coreui/utils/js/index.js"></script>
-    <script src="js/kallmann-posts-data.js"></script>
-    <script src="js/kallmann-predictions-data.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
