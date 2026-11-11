@@ -6,8 +6,8 @@
     "predictions": true
   },
   {
-    "name": "XXY",
-    "display_name": "r/XXY",
+    "name": "klinefelter_syndrome",
+    "display_name": "r/klinefelter_syndrome",
     "ready": false
   }
 ]
