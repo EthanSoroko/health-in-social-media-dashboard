@@ -272,6 +272,9 @@ const nextMonth = time => {
 
 // Counts posts per month between `from` and `to` (inclusive). Months with no posts are included
 // as 0. If the range starts or ends mid-month, only the days inside the range are counted.
+// Posts with their date parsed once, oldest first (data: js/kallmann-posts-data.js)
+const kallmannPosts = KALLMANN_POSTS.map(post => ({...post, time: parseISODate(post.date)}));
+
 const countPostsPerMonth = (from, to) => {
   const labels = [];
   const counts = [];
@@ -281,10 +284,9 @@ const countPostsPerMonth = (from, to) => {
     labels.push(formatDate(time, {month: 'short', year: 'numeric'}));
     counts.push(0);
   }
-  for (const [day, count] of KALLMANN_DAILY_POSTS) {
-    const time = parseISODate(day);
-    if (time >= from && time <= to) {
-      counts[indexByMonth.get(monthStart(time))] += count;
+  for (const post of kallmannPosts) {
+    if (post.time >= from && post.time <= to) {
+      counts[indexByMonth.get(monthStart(post.time))] += 1;
     }
   }
   return {labels, counts};
@@ -351,44 +353,321 @@ const mainChart = new Chart(document.getElementById('main-chart'), {
   }
 });
 
-// ---------- Controls: date range ----------
-const mainChartFrom = document.getElementById('main-chart-from');
-const mainChartTo = document.getElementById('main-chart-to');
-const mainChartError = document.getElementById('main-chart-error');
-const mainChartSubtitle = document.getElementById('main-chart-subtitle');
+// ---------- Date range controls (shared by the dashboard charts) ----------
 const DATA_START = parseISODate(KALLMANN_POSTS_RANGE.start);
 const DATA_END = parseISODate(KALLMANN_POSTS_RANGE.end);
 const LONG_DATE = {month: 'long', day: 'numeric', year: 'numeric'};
+const formatRange = (from, to) => `${formatDate(from, LONG_DATE)} - ${formatDate(to, LONG_DATE)}`;
+const pluralize = (count, word) => `${count.toLocaleString('en-US')} ${count === 1 ? word : `${word}s`}`;
 
-const resetMainChartRange = () => {
-  mainChartFrom.value = KALLMANN_POSTS_RANGE.start;
-  mainChartTo.value = KALLMANN_POSTS_RANGE.end;
+// Wires up the `<prefix>-from`, `<prefix>-to`, `<prefix>-reset` and `<prefix>-error` elements.
+// Calls onChange(from, to) with a valid range (UTC timestamps) clamped to the data's period.
+// Returns a function that re-runs onChange with the current range (for other controls).
+const setupDateRange = (prefix, onChange) => {
+  const fromInput = document.getElementById(`${prefix}-from`);
+  const toInput = document.getElementById(`${prefix}-to`);
+  const errorElement = document.getElementById(`${prefix}-error`);
+
+  const showError = message => {
+    errorElement.textContent = message;
+    fromInput.classList.toggle('is-invalid', Boolean(message));
+    toInput.classList.toggle('is-invalid', Boolean(message));
+  };
+
+  const update = () => {
+    if (!fromInput.value || !toInput.value) {
+      showError('Enter both a start and an end date.');
+      return;
+    }
+    if (fromInput.value > toInput.value) {
+      showError('The start date must be on or before the end date.');
+      return;
+    }
+    const from = Math.max(parseISODate(fromInput.value), DATA_START);
+    const to = Math.min(parseISODate(toInput.value), DATA_END);
+    if (from > to) {
+      showError(`Data covers ${formatRange(DATA_START, DATA_END)}.`);
+      return;
+    }
+    showError('');
+    onChange(from, to);
+  };
+
+  const reset = () => {
+    fromInput.value = KALLMANN_POSTS_RANGE.start;
+    toInput.value = KALLMANN_POSTS_RANGE.end;
+    update();
+  };
+
+  for (const input of [fromInput, toInput]) {
+    input.min = KALLMANN_POSTS_RANGE.start;
+    input.max = KALLMANN_POSTS_RANGE.end;
+    input.addEventListener('change', update);
+  }
+  document.getElementById(`${prefix}-reset`).addEventListener('click', reset);
+  reset();
+  return update;
 };
 
-const showMainChartError = message => {
-  mainChartError.textContent = message;
-  mainChartFrom.classList.toggle('is-invalid', Boolean(message));
-  mainChartTo.classList.toggle('is-invalid', Boolean(message));
+// Small DOM helper: element with optional class names and text (text is never parsed as HTML)
+const createElement = (tag, className = '', text = '') => {
+  const element = document.createElement(tag);
+  if (className) {
+    element.className = className;
+  }
+  if (text) {
+    element.textContent = text;
+  }
+  return element;
 };
 
-const updateMainChart = () => {
-  if (!mainChartFrom.value || !mainChartTo.value) {
-    showMainChartError('Enter both a start and an end date.');
-    return;
+// ---------- Poster type / post type doughnuts (follow the line chart's date range) ----------
+// Fixed color order, checked for color-vision deficiencies with the dataviz palette validator.
+// A category keeps its color whatever its rank; "Unknown" is always neutral gray.
+const CATEGORY_COLORS = ['#9b2018', '#c79e41', '#3862a7', '#5cc6b9', '#59894f'];
+const NEUTRAL_COLOR = '#aab3c5';
+const colorsFor = order => {
+  const colors = new Map();
+  let slot = 0;
+  for (const name of order) {
+    colors.set(name, name === 'Unknown' ? NEUTRAL_COLOR : CATEGORY_COLORS[slot++] || NEUTRAL_COLOR);
   }
-  if (mainChartFrom.value > mainChartTo.value) {
-    showMainChartError('The start date must be on or before the end date.');
-    return;
-  }
-  // Keep the range inside the period the data covers
-  const from = Math.max(parseISODate(mainChartFrom.value), DATA_START);
-  const to = Math.min(parseISODate(mainChartTo.value), DATA_END);
-  if (from > to) {
-    showMainChartError(`Data covers ${formatDate(DATA_START, LONG_DATE)} to ${formatDate(DATA_END, LONG_DATE)}.`);
-    return;
-  }
-  showMainChartError('');
+  return colors;
+};
+const WHO_COLORS = colorsFor(KALLMANN_WHO_ORDER);
+const WHAT_COLORS = colorsFor(KALLMANN_WHAT_ORDER);
+const formatPercent = share => (share > 0 && share < 0.005 ? '<1%' : `${Math.round(share * 100)}%`);
 
+const swatch = color => {
+  const element = createElement('span', 'swatch');
+  element.style.background = color;
+  return element;
+};
+
+// Builds one doughnut with its legend table; returns update(countsByCategory, postCount) → total counted
+const createBreakdown = (prefix, order, colors) => {
+  const legend = document.getElementById(`${prefix}-legend`);
+  const center = document.getElementById(`${prefix}-center`);
+  const chart = new Chart(document.getElementById(`${prefix}-chart`), {
+    type: 'doughnut',
+    data: {
+      labels: order,
+      datasets: [{
+        data: [],
+        backgroundColor: order.map(name => colors.get(name)),
+        borderColor: '#fff',
+        borderWidth: 2,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: context => {
+              const total = context.dataset.data.reduce((sum, count) => sum + count, 0);
+              return `${context.label}: ${context.parsed} (${formatPercent(context.parsed / total)})`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return (counts, postCount) => {
+    const rows = order.map(name => ({name, count: counts.get(name) || 0}));
+    const total = rows.reduce((sum, row) => sum + row.count, 0);
+    chart.data.datasets[0].data = rows.map(row => row.count);
+    chart.update();
+
+    center.replaceChildren(createElement('strong', '', postCount.toLocaleString('en-US')), createElement('span', '', postCount === 1 ? 'post' : 'posts'));
+
+    const legendRows = rows.filter(row => row.count > 0).map(row => {
+      const tr = createElement('tr');
+      const name = createElement('td');
+      name.append(swatch(colors.get(row.name)), row.name);
+      tr.append(name, createElement('td', 'num', String(row.count)), createElement('td', 'num text-body-secondary', formatPercent(row.count / total)));
+      return tr;
+    });
+    if (legendRows.length === 0) {
+      const tr = createElement('tr');
+      tr.append(createElement('td', 'text-body-secondary', 'No posts in this range.'));
+      legendRows.push(tr);
+    }
+    const tbody = createElement('tbody');
+    tbody.append(...legendRows);
+    legend.replaceChildren(tbody);
+    return total;
+  };
+};
+
+const updateWhoBreakdown = createBreakdown('who', KALLMANN_WHO_ORDER, WHO_COLORS);
+const updateWhatBreakdown = createBreakdown('what', KALLMANN_WHAT_ORDER, WHAT_COLORS);
+const breakdownSubtitle = document.getElementById('breakdown-subtitle');
+const whatNote = document.getElementById('what-note');
+
+const updateBreakdowns = (posts, from, to) => {
+  const whoCounts = new Map();
+  const whatCounts = new Map();
+  for (const post of posts) {
+    whoCounts.set(post.who, (whoCounts.get(post.who) || 0) + 1);
+    for (const what of post.what) {
+      whatCounts.set(what, (whatCounts.get(what) || 0) + 1);
+    }
+  }
+  updateWhoBreakdown(whoCounts, posts.length);
+  const labelTotal = updateWhatBreakdown(whatCounts, posts.length);
+
+  // A few posts have more than one post type, so that doughnut counts labels rather than posts
+  const multiLabel = posts.filter(post => post.what.length > 1).length;
+  whatNote.textContent = labelTotal > posts.length ?
+    `Counts labels, not posts: ${multiLabel} ${multiLabel === 1 ? 'post has' : 'posts have'} more than one post type.` :
+    '';
+  breakdownSubtitle.textContent = `${formatRange(from, to)} · ${pluralize(posts.length, 'post')}`;
+};
+
+// ---------- Posts list: 10 per page, filterable (follows the line chart's date range) ----------
+const POSTS_PER_PAGE = 10;
+const postsList = document.getElementById('posts-list');
+const postsSummary = document.getElementById('posts-summary');
+const postsPageInfo = document.getElementById('posts-page-info');
+const postsPagination = document.getElementById('posts-pagination');
+const postsWhoSelect = document.getElementById('posts-who');
+const postsWhatSelect = document.getElementById('posts-what');
+const postsState = {inRange: [], page: 1};
+
+for (const name of KALLMANN_WHO_ORDER) {
+  postsWhoSelect.add(new Option(name, name));
+}
+for (const name of KALLMANN_WHAT_ORDER) {
+  postsWhatSelect.add(new Option(name, name));
+}
+
+const postTag = (label, colors) => {
+  const tag = createElement('span', 'post-tag');
+  tag.append(swatch(colors.get(label) || NEUTRAL_COLOR), label);
+  return tag;
+};
+
+const postItem = post => {
+  const item = createElement('li', 'list-group-item py-3');
+  const title = createElement('a', 'post-title', post.title || '(untitled post)');
+  if (/^https:\/\/(www\.)?reddit\.com\//.test(post.url)) {
+    title.href = post.url;
+    title.target = '_blank';
+    title.rel = 'noopener noreferrer';
+  }
+
+  const meta = createElement('div', 'd-flex flex-wrap align-items-center gap-2 small text-body-secondary my-1');
+  meta.append(
+    createElement('span', '', formatDate(post.time, {month: 'short', day: 'numeric', year: 'numeric'})),
+    postTag(post.who, WHO_COLORS),
+    ...post.what.map(what => postTag(what, WHAT_COLORS))
+  );
+
+  item.append(title, meta);
+  if (post.snippet) {
+    item.append(createElement('p', 'mb-1', post.snippet));
+  }
+  item.append(createElement('div', 'small text-body-secondary', `${pluralize(post.score, 'point')} · ${pluralize(post.comments, 'comment')}`));
+  return item;
+};
+
+// Page numbers to show: first, last, and the current page's neighbours, with gaps marked null
+const visiblePages = (current, count) => {
+  const pages = [...new Set([1, current - 1, current, current + 1, count])]
+    .filter(page => page >= 1 && page <= count)
+    .sort((a, b) => a - b);
+  const withGaps = [];
+  for (const [index, page] of pages.entries()) {
+    if (index > 0 && page - pages[index - 1] > 1) {
+      withGaps.push(null);
+    }
+    withGaps.push(page);
+  }
+  return withGaps;
+};
+
+const pageItem = (label, page, {active = false, disabled = false, ariaLabel = ''} = {}) => {
+  const item = createElement('li', `page-item${active ? ' active' : ''}${disabled ? ' disabled' : ''}`);
+  const button = createElement('button', 'page-link', label);
+  button.type = 'button';
+  button.disabled = disabled;
+  if (ariaLabel) {
+    button.setAttribute('aria-label', ariaLabel);
+  }
+  if (active) {
+    button.setAttribute('aria-current', 'page');
+  }
+  button.addEventListener('click', () => {
+    postsState.page = page;
+    renderPosts();
+  });
+  item.append(button);
+  return item;
+};
+
+const renderPagination = pageCount => {
+  if (pageCount <= 1) {
+    postsPagination.replaceChildren();
+    return;
+  }
+  const {page} = postsState;
+  const items = [pageItem('‹', page - 1, {disabled: page === 1, ariaLabel: 'Previous page'})];
+  for (const number of visiblePages(page, pageCount)) {
+    if (number === null) {
+      const gap = createElement('li', 'page-item disabled');
+      gap.append(createElement('span', 'page-link', '…'));
+      items.push(gap);
+    } else {
+      items.push(pageItem(String(number), number, {active: number === page, ariaLabel: `Page ${number}`}));
+    }
+  }
+  items.push(pageItem('›', page + 1, {disabled: page === pageCount, ariaLabel: 'Next page'}));
+  postsPagination.replaceChildren(...items);
+};
+
+function renderPosts() {
+  const who = postsWhoSelect.value;
+  const what = postsWhatSelect.value;
+  const matches = postsState.inRange.filter(post => (!who || post.who === who) && (!what || post.what.includes(what)));
+  const pageCount = Math.max(1, Math.ceil(matches.length / POSTS_PER_PAGE));
+  postsState.page = Math.min(Math.max(postsState.page, 1), pageCount);
+
+  const start = (postsState.page - 1) * POSTS_PER_PAGE;
+  const pagePosts = matches.slice(start, start + POSTS_PER_PAGE);
+  postsList.replaceChildren(...(pagePosts.length > 0 ?
+    pagePosts.map(post => postItem(post)) :
+    [createElement('li', 'list-group-item py-4 text-center text-body-secondary', 'No posts match these filters in this date range.')]));
+
+  postsPageInfo.textContent = matches.length > 0 ?
+    `Showing ${start + 1}–${start + pagePosts.length} of ${pluralize(matches.length, 'post')}` :
+    '';
+  renderPagination(pageCount);
+}
+
+for (const select of [postsWhoSelect, postsWhatSelect]) {
+  select.addEventListener('change', () => {
+    postsState.page = 1;
+    renderPosts();
+  });
+}
+
+const updatePostsList = (posts, from, to) => {
+  postsState.inRange = [...posts].reverse(); // newest first
+  postsState.page = 1;
+  postsSummary.textContent = `${formatRange(from, to)} · newest first`;
+  renderPosts();
+};
+
+// ---------- Main chart: posts per month (its date range also drives the doughnuts and posts list) ----------
+const mainChartSubtitle = document.getElementById('main-chart-subtitle');
+setupDateRange('main-chart', (from, to) => {
   const {labels, counts} = countPostsPerMonth(from, to);
   const total = counts.reduce((sum, count) => sum + count, 0);
   mainChart.data.labels = labels;
@@ -396,19 +675,110 @@ const updateMainChart = () => {
   // With only a month or two there's no line to speak of, so show the points
   mainChart.data.datasets[0].pointRadius = counts.length < 3 ? 4 : 0;
   mainChart.update();
+  mainChartSubtitle.textContent = `r/kallmann_syndrome, ${formatRange(from, to)} · ${pluralize(total, 'post')}`;
 
-  mainChartSubtitle.textContent = `r/kallmann_syndrome, ${formatDate(from, LONG_DATE)} - ${formatDate(to, LONG_DATE)} · ${total.toLocaleString('en-US')} ${total === 1 ? 'post' : 'posts'}`;
-};
-
-for (const input of [mainChartFrom, mainChartTo]) {
-  input.min = KALLMANN_POSTS_RANGE.start;
-  input.max = KALLMANN_POSTS_RANGE.end;
-  input.addEventListener('change', updateMainChart);
-}
-document.getElementById('main-chart-reset').addEventListener('click', () => {
-  resetMainChartRange();
-  updateMainChart();
+  const postsInRange = kallmannPosts.filter(post => post.time >= from && post.time <= to);
+  updateBreakdowns(postsInRange, from, to);
+  updatePostsList(postsInRange, from, to);
 });
 
-resetMainChartRange();
-updateMainChart();
+// ---------------------------------------------------------------------------
+// Predictions chart: actual vs. predicted category counts for the test set
+// (data: js/kallmann-predictions-data.js, built by scripts/build_predictions_data.py)
+// ---------------------------------------------------------------------------
+const predictionsModelSelect = document.getElementById('predictions-chart-model');
+const predictionsSubtitle = document.getElementById('predictions-chart-subtitle');
+const predictionPosts = KALLMANN_PREDICTION_POSTS.map(([date, actual, ...predicted]) => ({
+  time: parseISODate(date),
+  actual,
+  predicted
+}));
+
+for (const [index, model] of KALLMANN_PREDICTION_MODELS.entries()) {
+  predictionsModelSelect.add(new Option(model.name, String(index)));
+}
+
+const predictionsChart = new Chart(document.getElementById('predictions-chart'), {
+  type: 'bar',
+  data: {
+    labels: KALLMANN_PREDICTION_CATEGORIES,
+    datasets: [{
+      label: 'Actual',
+      backgroundColor: coreui.Utils.getStyle('--cui-primary'),
+      data: []
+    }, {
+      label: 'Predicted',
+      backgroundColor: coreui.Utils.getStyle('--cui-info'),
+      data: []
+    }]
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        align: 'end',
+        labels: {
+          color: coreui.Utils.getStyle('--cui-body-color'),
+          boxWidth: 12
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          color: coreui.Utils.getStyle('--cui-body-color')
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Posts',
+          color: coreui.Utils.getStyle('--cui-body-color')
+        },
+        border: {
+          color: coreui.Utils.getStyle('--cui-border-color-translucent')
+        },
+        grid: {
+          color: coreui.Utils.getStyle('--cui-border-color-translucent')
+        },
+        ticks: {
+          color: coreui.Utils.getStyle('--cui-body-color'),
+          precision: 0
+        }
+      }
+    }
+  }
+});
+
+let predictionsRange = [DATA_START, DATA_END];
+const updatePredictionsChart = () => {
+  const [from, to] = predictionsRange;
+  const modelIndex = Number(predictionsModelSelect.value);
+  const model = KALLMANN_PREDICTION_MODELS[modelIndex];
+  const posts = predictionPosts.filter(post => post.time >= from && post.time <= to);
+
+  const actualCounts = KALLMANN_PREDICTION_CATEGORIES.map(category => posts.filter(post => post.actual === category).length);
+  const predictedCounts = KALLMANN_PREDICTION_CATEGORIES.map(category => posts.filter(post => post.predicted[modelIndex] === category).length);
+  const correct = posts.filter(post => post.predicted[modelIndex] === post.actual).length;
+
+  predictionsChart.data.datasets[0].data = actualCounts;
+  predictionsChart.data.datasets[1].label = `Predicted (${model.name})`;
+  predictionsChart.data.datasets[1].data = predictedCounts;
+  predictionsChart.update();
+
+  const accuracy = posts.length === 0 ?
+    'no test posts in this range' :
+    `${pluralize(posts.length, 'test post')} · ${model.name} labeled ${correct} correctly (${Math.round((100 * correct) / posts.length)}%)`;
+  predictionsSubtitle.textContent = `${formatRange(from, to)} · ${accuracy}`;
+};
+
+predictionsModelSelect.addEventListener('change', updatePredictionsChart);
+setupDateRange('predictions-chart', (from, to) => {
+  predictionsRange = [from, to];
+  updatePredictionsChart();
+});

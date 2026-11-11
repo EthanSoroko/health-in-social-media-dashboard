@@ -211,7 +211,9 @@
 
 /* Dashboard chart date range: keep the inputs the same width when flagged invalid */
 #main-chart-from.is-invalid,
-#main-chart-to.is-invalid {
+#main-chart-to.is-invalid,
+#predictions-chart-from.is-invalid,
+#predictions-chart-to.is-invalid {
   padding-right: 0.75rem;
   background-image: none;
 }

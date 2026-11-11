@@ -40,6 +40,7 @@
     <!-- Main styles for this application-->
     <link href="css/style.css" rel="stylesheet">
     <link href="css/bc-theme.css" rel="stylesheet">
+    <link href="css/dashboard.css" rel="stylesheet">
     <!-- We use those styles to show code examples, you should remove them in your application.-->
     <link href="css/examples.css" rel="stylesheet">
     <script src="js/config.js"></script>
@@ -77,11 +78,22 @@
               <path fill="var(--ci-primary-color, currentcolor)" d="M80 264h32v32H80zm160-136h32v32h-32zm-104 40h32v32h-32zm264 96h32v32h-32zm-102.778 71.1 69.2-144.173-28.85-13.848-69.183 144.135a64.141 64.141 0 1 0 28.833 13.886M256 416a32 32 0 1 1 32-32 32.036 32.036 0 0 1-32 32" class="ci-primary" />
             </svg>
             Dashboard
-            <span class="badge badge-sm bg-info ms-auto">NEW</span>
+            <span class="badge badge-sm bg-info ms-auto d-none">NEW</span>
           </a>
         </li>
-        <li class="nav-title">UI Elements</li>
         <li class="nav-item">
+          <a class="nav-link disabled" aria-disabled="true">
+            <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <path fill="var(--ci-primary-color, currentcolor)" fill-rule="evenodd" d="M256 16C123.452 16 16 123.452 16 256s107.452 240 240 240 240-107.452 240-240S388.548 16 256 16m0 448c-114.691 0-208-93.309-208-208S141.309 48 256 48s208 93.309 208 208-93.309 208-208 208" class="ci-primary" />
+              <path fill="var(--ci-primary-color, currentcolor)" d="M240 216h32v168h-32zm0-88h32v40h-32z" class="ci-primary" />
+            </svg>
+            Info
+            <span class="badge badge-sm bg-info ms-auto">Coming soon</span>
+          </a>
+        </li>
+        <!-- Hidden for now: template sidebar items below (remove "d-none" to show again) -->
+        <li class="d-none nav-title">UI Elements</li>
+        <li class="d-none nav-item">
           <a class="nav-link" href="charts.html">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="M105.361 398.32A195.891 195.891 0 0 1 343.42 91.125l23.256-23.255A227.875 227.875 0 0 0 82.733 420.948 228.03 228.03 0 0 0 366.24 452.1l-23.312-23.312c-75.028 43.98-173.271 33.829-237.567-30.468" class="ci-primary" />
@@ -90,7 +102,7 @@
             Charts
           </a>
         </li>
-        <li class="nav-group">
+        <li class="d-none nav-group">
           <a class="nav-link nav-group-toggle" href="#">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="m491.693 256.705-54.957-49.461 16.407-13.406a80.5 80.5 0 0 0 18.363-21.522c18.148-31.441 12.867-70.042-13.144-96.052s-64.612-31.291-96.051-13.142a80.5 80.5 0 0 0-21.52 18.362l-13.408 16.407-49.461-54.956-.579-.611a24.03 24.03 0 0 0-33.941 0l-65.6 65.605 1.19 23.7 33.108 27.056a48.6 48.6 0 0 1 11.079 12.889c10.807 18.722 7.57 41.8-8.056 57.426s-38.7 18.862-57.426 8.058a48.7 48.7 0 0 1-12.9-11.086l-27.047-33.1-23.7-1.189-71.26 71.26a24 24 0 0 0 0 33.942l175.357 175.359a80 80 0 0 0 113.138 0L492.3 291.225a24.03 24.03 0 0 0 0-33.94ZM288.657 449.617a48 48 0 0 1-67.883 0L51.069 279.911l53.1-53.095 15.91 19.473.1.119a80.5 80.5 0 0 0 21.521 18.363c31.441 18.149 70.041 12.867 96.052-13.144s31.291-64.61 13.143-96.05a80.5 80.5 0 0 0-18.363-21.521l-19.591-16.01 47.124-47.124 56.018 62.241 24.282-.579 25.062-30.67a48.6 48.6 0 0 1 12.888-11.078c18.722-10.807 41.8-7.569 57.426 8.056s18.864 38.7 8.057 57.426a48.6 48.6 0 0 1-11.079 12.889l-30.67 25.061-.58 24.282 62.243 56.018Z" class="ci-primary" />
@@ -254,7 +266,7 @@
             </li>
           </ul>
         </li>
-        <li class="nav-group">
+        <li class="d-none nav-group">
           <a class="nav-link nav-group-toggle" href="#">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="M112 152h288v32H112zm0 88h288v32H112zm0 88h152v32H112z" class="ci-primary" />
@@ -429,7 +441,7 @@
             </li>
           </ul>
         </li>
-        <li class="nav-group">
+        <li class="d-none nav-group">
           <a class="nav-link nav-group-toggle" href="#">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="M494 198.671a40.54 40.54 0 0 0-32.174-27.592l-115.909-18.837-53.732-104.414a40.7 40.7 0 0 0-72.37 0l-53.732 104.414-115.907 18.837a40.7 40.7 0 0 0-22.364 68.827l82.7 83.368-17.9 116.055a40.672 40.672 0 0 0 58.548 42.538L256 428.977l104.843 52.89a40.69 40.69 0 0 0 58.548-42.538l-17.9-116.055 82.7-83.368A40.54 40.54 0 0 0 494 198.671m-32.53 18.7L367.4 312.2l20.364 132.01a8.671 8.671 0 0 1-12.509 9.088L256 393.136 136.744 453.3a8.671 8.671 0 0 1-12.509-9.088L144.6 312.2l-94.069-94.83a8.7 8.7 0 0 1 4.778-14.706l131.841-21.426 61.119-118.767a8.694 8.694 0 0 1 15.462 0l61.119 118.767 131.841 21.426a8.7 8.7 0 0 1 4.778 14.706Z" class="ci-primary" />
@@ -458,7 +470,7 @@
             </li>
           </ul>
         </li>
-        <li class="nav-item">
+        <li class="d-none nav-item">
           <a class="nav-link" href="widgets.html">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="M472 40H40a24.03 24.03 0 0 0-24 24v384a24.03 24.03 0 0 0 24 24h432a24.03 24.03 0 0 0 24-24V64a24.03 24.03 0 0 0-24-24m-8 400H48V72h416Z" class="ci-primary" />
@@ -468,9 +480,9 @@
             <span class="badge badge-sm bg-info ms-auto">NEW</span>
           </a>
         </li>
-        <li class="nav-divider"></li>
-        <li class="nav-title">Extras</li>
-        <li class="nav-group">
+        <li class="d-none nav-divider"></li>
+        <li class="d-none nav-title">Extras</li>
+        <li class="d-none nav-group">
           <a class="nav-link nav-group-toggle" href="#">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="M384 200v-56a128 128 0 0 0-256 0v56H88v128c0 92.635 75.364 168 168 168s168-75.365 168-168V200Zm-224-56a96 96 0 0 1 192 0v56H160Zm232 184c0 74.99-61.01 136-136 136s-136-61.01-136-136v-96h272Z" class="ci-primary" />
@@ -524,7 +536,7 @@
             </li>
           </ul>
         </li>
-        <li class="nav-group">
+        <li class="d-none nav-group">
           <a class="nav-link nav-group-toggle" href="#">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="m496.059 182.581-.025-70.7-32 .012.017 48.172-66.288 23.779-45.729.007v-30.964A96.55 96.55 0 0 0 329.92 91.3l43.129-43.413h42.84v-32h-56.157l-53.987 54.344a96.82 96.82 0 0 0-100.511-.554l-53.056-53.84-56.158.05.029 32 42.748-.038L180.824 90.5a96.56 96.56 0 0 0-22.79 62.39v30.99l-43.235.007L48 160.093v-48.172H16v70.742l80.035 28.509.007 84.715H16.034v32h80.01v8.01a159.7 159.7 0 0 0 9.7 54.979l-89.71 34.572v70.439h32v-48.476l71.73-27.642a159.794 159.794 0 0 0 249.578 29.044 161.5 161.5 0 0 0 23.058-29.146l71.638 27.727v48.493h32v-70.421l-89.618-34.685a159.2 159.2 0 0 0 9.614-55.1v-7.794h80v-32h-80v-84.6ZM240 463.029C176.991 455.235 128.045 401.2 128.045 335.9l-.01-120.011h30v.007H240Zm-49.966-279.154v-30.988a65 65 0 0 1 130 0v30.968Zm194 151.849A128.28 128.28 0 0 1 272 462.979V215.887h80.032v-.036h32Z" class="ci-primary" />
@@ -546,7 +558,7 @@
             </li>
           </ul>
         </li>
-        <li class="nav-item mt-auto">
+        <li class="d-none nav-item mt-auto">
           <a class="nav-link" href="https://coreui.io/bootstrap/docs/templates/installation/" target="_blank">
             <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="M334.627 16H48v480h424V153.373ZM440 166.627V168H320V48h1.373ZM80 464V48h208v152h152v264Z" class="ci-primary" />
@@ -555,7 +567,7 @@
             Docs
           </a>
         </li>
-        <li class="nav-item">
+        <li class="d-none nav-item">
           <a class="nav-link text-primary fw-semibold" href="https://coreui.io/product/bootstrap-dashboard-template/" target="_top">
             <svg class="nav-icon text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="m487.938 162.108-224-128a16 16 0 0 0-15.876 0l-224 128a16 16 0 0 0 .382 28l224 120a16 16 0 0 0 15.112 0l224-120a16 16 0 0 0 .382-28M256 277.849 65.039 175.548 256 66.428l190.961 109.12Z" class="ci-primary" />
@@ -566,19 +578,22 @@
           </a>
         </li>
       </ul>
-      <div class="sidebar-footer border-top d-none d-md-flex">
+      <!-- Hidden for now: sidebar collapse button (add "d-md-flex" back to show it on medium+ screens) -->
+      <div class="sidebar-footer border-top d-none">
         <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
       </div>
     </div>
     <div class="wrapper d-flex flex-column min-vh-100">
-      <header class="header header-sticky p-0 mb-4">
-        <div class="container-fluid border-bottom px-4">
+      <!-- Top bar: hidden on large screens (d-lg-none). On small screens only the sidebar toggle shows;
+           the account/notification links and breadcrumb are hidden for now (remove "d-none" to show again) -->
+      <header class="header header-sticky p-0 mb-4 d-lg-none">
+        <div class="container-fluid px-4">
           <button class="header-toggler" type="button" onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()" style="margin-inline-start: -14px">
             <svg class="icon icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="var(--ci-primary-color, currentcolor)" d="M80 96h352v32H80zm0 144h352v32H80zm0 144h352v32H80z" class="ci-primary" />
             </svg>
           </button>
-          <ul class="header-nav ms-auto">
+          <ul class="d-none header-nav ms-auto">
             <li class="nav-item">
               <a class="nav-link" href="#">
                 <svg class="icon icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -601,7 +616,7 @@
               </a>
             </li>
           </ul>
-          <ul class="header-nav">
+          <ul class="d-none header-nav">
             <li class="nav-item py-1">
               <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
             </li>
@@ -685,7 +700,7 @@
             </li>
           </ul>
         </div>
-        <div class="container-fluid px-4">
+        <div class="container-fluid px-4 d-none">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb my-0">
               <li class="breadcrumb-item"><a href="#">Home</a></li>
@@ -694,9 +709,10 @@
           </nav>
         </div>
       </header>
-      <div class="body flex-grow-1">
+      <div class="body flex-grow-1 pt-lg-4">
         <div class="container-lg px-4">
-          <div class="row g-4 mb-4">
+          <!-- Hidden for now: template mini chart cards (remove "d-none" to show again) -->
+          <div class="row g-4 mb-4 d-none">
             <div class="col-sm-6 col-xl-3">
               <div class="card text-white bg-primary">
                 <div class="card-body pb-0 d-flex justify-content-between align-items-start">
@@ -862,48 +878,92 @@
                 <canvas class="chart" id="main-chart" height="300"></canvas>
               </div>
             </div>
-            <div class="card-footer">
-              <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 row-cols-xl-5 g-4 mb-2 text-center">
-                <div class="col">
-                  <div class="text-body-secondary">Visits</div>
-                  <div class="fw-semibold text-truncate">29.703 Users (40%)</div>
-                  <div class="progress progress-thin mt-2">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="card-body border-top">
+              <div class="d-flex flex-wrap align-items-baseline gap-2 mb-3">
+                <h5 class="mb-0">Who is posting, and what kind of post</h5>
+                <span class="small text-body-secondary" id="breakdown-subtitle"></span>
+              </div>
+              <div class="row g-4">
+                <div class="col-lg-6">
+                  <h6 class="text-body-secondary">Poster type</h6>
+                  <div class="d-flex flex-wrap align-items-center gap-4">
+                    <div class="breakdown-donut">
+                      <canvas id="who-chart" aria-describedby="who-legend"></canvas>
+                      <div class="breakdown-donut-center" id="who-center"></div>
+                    </div>
+                    <table class="table table-sm breakdown-legend mb-0" id="who-legend"></table>
                   </div>
                 </div>
-                <div class="col">
-                  <div class="text-body-secondary">Unique</div>
-                  <div class="fw-semibold text-truncate">24.093 Users (20%)</div>
-                  <div class="progress progress-thin mt-2">
-                    <div class="progress-bar bg-info" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="col-lg-6">
+                  <h6 class="text-body-secondary">Post type</h6>
+                  <div class="d-flex flex-wrap align-items-center gap-4">
+                    <div class="breakdown-donut">
+                      <canvas id="what-chart" aria-describedby="what-legend"></canvas>
+                      <div class="breakdown-donut-center" id="what-center"></div>
+                    </div>
+                    <table class="table table-sm breakdown-legend mb-0" id="what-legend"></table>
                   </div>
-                </div>
-                <div class="col">
-                  <div class="text-body-secondary">Pageviews</div>
-                  <div class="fw-semibold text-truncate">78.706 Views (60%)</div>
-                  <div class="progress progress-thin mt-2">
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
-                <div class="col">
-                  <div class="text-body-secondary">New Users</div>
-                  <div class="fw-semibold text-truncate">22.123 Users (80%)</div>
-                  <div class="progress progress-thin mt-2">
-                    <div class="progress-bar bg-danger" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
-                <div class="col d-none d-xl-block">
-                  <div class="text-body-secondary">Bounce Rate</div>
-                  <div class="fw-semibold text-truncate">40.15%</div>
-                  <div class="progress progress-thin mt-2">
-                    <div class="progress-bar" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
+                  <div class="small text-body-secondary mt-2" id="what-note"></div>
                 </div>
               </div>
             </div>
           </div>
           <!-- /.card-->
-          <div class="row g-4 mb-4">
+          <div class="card mb-4">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div>
+                <strong>Posts</strong>
+                <span class="small text-body-secondary ms-1" id="posts-summary"></span>
+              </div>
+              <div class="d-flex flex-wrap gap-2" role="group" aria-label="Filter posts">
+                <label class="visually-hidden" for="posts-who">Poster type</label>
+                <select class="form-select form-select-sm" id="posts-who" style="width: auto">
+                  <option value="">All poster types</option>
+                </select>
+                <label class="visually-hidden" for="posts-what">Post type</label>
+                <select class="form-select form-select-sm" id="posts-what" style="width: auto">
+                  <option value="">All post types</option>
+                </select>
+              </div>
+            </div>
+            <ul class="list-group list-group-flush" id="posts-list" aria-live="polite"></ul>
+            <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <span class="small text-body-secondary" id="posts-page-info"></span>
+              <nav aria-label="Posts pages">
+                <ul class="pagination pagination-sm mb-0" id="posts-pagination"></ul>
+              </nav>
+            </div>
+          </div>
+          <!-- /.card-->
+          <div class="card mb-4">
+            <div class="card-body">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div>
+                  <h4 class="card-title mb-0">Post categories: actual vs. predicted</h4>
+                  <div class="small text-body-secondary" id="predictions-chart-subtitle">Test set</div>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Prediction chart controls">
+                  <label class="visually-hidden" for="predictions-chart-model">Model</label>
+                  <select class="form-select" id="predictions-chart-model" style="width: auto"></select>
+                  <div class="d-flex align-items-center gap-2">
+                    <label class="visually-hidden" for="predictions-chart-from">From</label>
+                    <input class="form-control" id="predictions-chart-from" type="date" style="width: auto">
+                    <span class="text-body-secondary">to</span>
+                    <label class="visually-hidden" for="predictions-chart-to">To</label>
+                    <input class="form-control" id="predictions-chart-to" type="date" style="width: auto">
+                    <button class="btn btn-link px-1" id="predictions-chart-reset" type="button">Reset</button>
+                  </div>
+                </div>
+              </div>
+              <div class="invalid-feedback d-block text-end" id="predictions-chart-error" style="min-height: 1.25rem"></div>
+              <div class="c-chart-wrapper" style="height: 300px; margin-top: 20px">
+                <canvas class="chart" id="predictions-chart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+          <!-- /.card-->
+          <!-- Hidden for now: template content below the bar graph (remove "d-none" to show again) -->
+          <div class="row g-4 mb-4 d-none">
             <div class="col-sm-6 col-lg-4">
               <div class="card" style="--cui-card-cap-bg: #3b5998">
                 <div class="card-header position-relative d-flex justify-content-center align-items-center">
@@ -969,7 +1029,8 @@
             <!-- /.col-->
           </div>
           <!-- /.row-->
-          <div class="row">
+          <!-- Hidden for now: template content below the bar graph (remove "d-none" to show again) -->
+          <div class="row d-none">
             <div class="col-md-12">
               <div class="card mb-4">
                 <div class="card-header">Traffic &amp; Sales</div>
@@ -2199,7 +2260,8 @@
           <!-- /.row-->
         </div>
       </div>
-      <footer class="footer px-4">
+      <!-- Hidden for now: template footer (remove "d-none" to show again) -->
+      <footer class="footer px-4 d-none">
         <div>
           <a href="https://coreui.io">CoreUI</a>
           <a href="https://coreui.io/product/free-bootstrap-admin-template/">Bootstrap Admin Template</a>
@@ -2228,6 +2290,7 @@
     <script src="vendors/@coreui/chartjs/js/coreui-chartjs.js"></script>
     <script src="vendors/@coreui/utils/js/index.js"></script>
     <script src="js/kallmann-posts-data.js"></script>
+    <script src="js/kallmann-predictions-data.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
