@@ -13,6 +13,7 @@ subreddit is the folder name under data/subreddits/ (default: kallmann_syndrome)
 
 import calendar
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -31,6 +32,14 @@ def write_json(path, header, list_key, items):
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def reddit_id(url):
+    """Reddit's post id, e.g. "44k46b" in .../comments/44k46b/an_apology/ (comments link to posts by it)."""
+    match = re.search(r"/comments/([a-z0-9]+)/", url)
+    if not match:
+        sys.exit(f"No Reddit post id in {url}")
+    return match.group(1)
+
+
 def load_viz_data(viz_html):
     for line in Path(viz_html).read_text(encoding="utf-8").splitlines():
         if line.startswith("const DATA = "):
@@ -47,6 +56,7 @@ def main():
     posts = sorted(
         (
             {
+                "id": reddit_id(p["permalink"]),
                 "date": p["date"],
                 "who": p["who"],
                 "what": p["what"],

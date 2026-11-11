@@ -108,19 +108,19 @@
             <li class="nav-item">
               <a class="nav-link" href="#posts-per-month" data-section-link>
                 <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Posts per Month
+                <span data-comments-text="Comments per Month">Posts per Month</span>
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#post-breakdown" data-section-link>
                 <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Poster &amp; Post Types
+                <span data-comments-text="Commenters &amp; Types">Poster &amp; Post Types</span>
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#posts" data-section-link>
                 <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                Posts
+                <span data-comments-text="Comments">Posts</span>
               </a>
             </li>
             <li class="nav-item">
@@ -762,7 +762,13 @@
                 <h1 class="card-title h3 mb-1">Health in Social Media</h1>
                 <div class="text-body-secondary" id="page-subtitle">Reddit posts from rare-disease communities</div>
               </div>
-              <div>
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="btn-group" role="group" aria-label="Show posts or comments">
+                  <input class="btn-check" type="radio" name="view-mode" id="mode-posts" value="posts" autocomplete="off" checked>
+                  <label class="btn btn-outline-primary" for="mode-posts">Posts</label>
+                  <input class="btn-check" type="radio" name="view-mode" id="mode-comments" value="comments" autocomplete="off">
+                  <label class="btn btn-outline-primary" for="mode-comments">Comments</label>
+                </div>
                 <label class="visually-hidden" for="subreddit-select">Community</label>
                 <select class="form-select" id="subreddit-select" style="width: auto" disabled>
                   <option>Loading...</option>
@@ -776,11 +782,11 @@
             <div class="col-sm-6 col-xl-3">
               <div class="card text-bg-primary">
                 <div class="card-body pb-0">
-                  <div class="fs-4 fw-semibold" id="stat-posts"></div>
-                  <div>Posts</div>
+                  <div class="fs-4 fw-semibold" id="stat-first"></div>
+                  <div id="stat-first-label">Posts</div>
                 </div>
                 <div class="c-chart-wrapper mt-3 mx-3" style="height: 70px">
-                  <canvas class="chart" id="card-chart1" height="70" aria-label="Posts per year" role="img"></canvas>
+                  <canvas class="chart" id="card-chart1" height="70" aria-label="Posts per year" role="img" data-comments-aria="Comments per year"></canvas>
                 </div>
               </div>
             </div>
@@ -792,7 +798,7 @@
                   <div id="stat-second-label"></div>
                 </div>
                 <div class="c-chart-wrapper mt-3 mx-3" style="height: 70px">
-                  <canvas class="chart" id="card-chart2" height="70" aria-label="Posts per year" role="img"></canvas>
+                  <canvas class="chart" id="card-chart2" height="70" aria-label="Posts per year" role="img" data-comments-aria="Comments per year"></canvas>
                 </div>
               </div>
             </div>
@@ -801,10 +807,10 @@
               <div class="card text-bg-primary">
                 <div class="card-body pb-0">
                   <div class="fs-4 fw-semibold" id="stat-patient-share"></div>
-                  <div>Patient posters</div>
+                  <div id="stat-patient-share-label">Patient posters</div>
                 </div>
                 <div class="c-chart-wrapper mt-3" style="height: 70px">
-                  <canvas class="chart" id="card-chart3" height="70" aria-label="Posts per year" role="img"></canvas>
+                  <canvas class="chart" id="card-chart3" height="70" aria-label="Posts per year" role="img" data-comments-aria="Comments per year"></canvas>
                 </div>
               </div>
             </div>
@@ -816,7 +822,7 @@
                   <div id="stat-busiest-year-label">Busiest year</div>
                 </div>
                 <div class="c-chart-wrapper mt-3 mx-3" style="height: 70px">
-                  <canvas class="chart" id="card-chart4" height="70" aria-label="Posts per year" role="img"></canvas>
+                  <canvas class="chart" id="card-chart4" height="70" aria-label="Posts per year" role="img" data-comments-aria="Comments per year"></canvas>
                 </div>
               </div>
             </div>
@@ -827,10 +833,10 @@
             <div class="card-body">
               <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div>
-                  <h4 class="card-title mb-0">Posts per Month</h4>
+                  <h4 class="card-title mb-0" data-comments-text="Comments per Month">Posts per Month</h4>
                   <div class="small text-body-secondary" id="main-chart-subtitle">r/kallmann_syndrome</div>
                 </div>
-                <div class="d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Chart controls">
+                <div class="d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Chart controls" data-mode-content="main">
                   <div class="d-flex align-items-center gap-2">
                     <label class="visually-hidden" for="main-chart-from">From</label>
                     <input class="form-control" id="main-chart-from" type="date" style="width: auto">
@@ -841,20 +847,24 @@
                   </div>
                 </div>
               </div>
-              <div class="invalid-feedback d-block text-end" id="main-chart-error" style="min-height: 1.25rem"></div>
-              <div class="c-chart-wrapper" style="height: 300px; margin-top: 20px">
-                <canvas class="chart" id="main-chart" height="300"></canvas>
+              <div data-mode-content="main">
+                <div class="invalid-feedback d-block text-end" id="main-chart-error" style="min-height: 1.25rem"></div>
+                <div class="c-chart-wrapper" style="height: 300px; margin-top: 20px">
+                  <canvas class="chart" id="main-chart" height="300"></canvas>
+                </div>
               </div>
+              <p class="text-body-secondary mt-3 mb-0 d-none" data-mode-na="main">Not available for comments yet.</p>
             </div>
             <div class="card-body border-top dashboard-section" id="post-breakdown">
               <div class="d-flex flex-wrap align-items-baseline gap-2 mb-3">
-                <h5 class="mb-0">Who Is Posting, and What Kind of Post</h5>
+                <h5 class="mb-0" data-comments-text="Who Is Commenting, and What Kind of Comment">Who Is Posting, and What Kind of Post</h5>
                 <span class="small text-body-secondary" id="breakdown-subtitle"></span>
               </div>
               <div class="row g-4">
                 <div class="col-lg-6">
-                  <h6 class="text-body-secondary">Poster Type</h6>
-                  <div class="d-flex flex-wrap align-items-center gap-4">
+                  <h6 class="text-body-secondary" data-comments-text="Commenter Type">Poster Type</h6>
+                  <p class="text-body-secondary mb-0 d-none" data-mode-na="who">Not available for comments yet.</p>
+                  <div class="d-flex flex-wrap align-items-center gap-4" data-mode-content="who">
                     <div class="breakdown-donut">
                       <canvas id="who-chart" aria-describedby="who-legend"></canvas>
                       <div class="breakdown-donut-center" id="who-center"></div>
@@ -863,15 +873,16 @@
                   </div>
                 </div>
                 <div class="col-lg-6">
-                  <h6 class="text-body-secondary">Post Type</h6>
-                  <div class="d-flex flex-wrap align-items-center gap-4">
+                  <h6 class="text-body-secondary" data-comments-text="Comment Type">Post Type</h6>
+                  <p class="text-body-secondary mb-0 d-none" data-mode-na="what">Not available for comments yet.</p>
+                  <div class="d-flex flex-wrap align-items-center gap-4" data-mode-content="what">
                     <div class="breakdown-donut">
                       <canvas id="what-chart" aria-describedby="what-legend"></canvas>
                       <div class="breakdown-donut-center" id="what-center"></div>
                     </div>
                     <table class="table table-sm breakdown-legend mb-0" id="what-legend"></table>
                   </div>
-                  <div class="small text-body-secondary mt-2" id="what-note"></div>
+                  <div class="small text-body-secondary mt-2" id="what-note" data-mode-content="what"></div>
                 </div>
               </div>
             </div>
@@ -880,15 +891,15 @@
           <div class="card mb-4 dashboard-section" id="posts">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
               <div>
-                <strong>Posts</strong>
+                <strong data-comments-text="Comments">Posts</strong>
                 <span class="small text-body-secondary ms-1" id="posts-summary"></span>
               </div>
-              <div class="d-flex flex-wrap gap-2" role="group" aria-label="Filter posts">
-                <label class="visually-hidden" for="posts-who">Poster type</label>
+              <div class="d-flex flex-wrap gap-2" role="group" aria-label="Filter the list">
+                <label class="visually-hidden" for="posts-who" data-comments-text="Commenter type">Poster type</label>
                 <select class="form-select form-select-sm" id="posts-who" style="width: auto">
                   <option value="">All poster types</option>
                 </select>
-                <label class="visually-hidden" for="posts-what">Post type</label>
+                <label class="visually-hidden" for="posts-what" data-comments-text="Comment type">Post type</label>
                 <select class="form-select form-select-sm" id="posts-what" style="width: auto">
                   <option value="">All post types</option>
                 </select>
@@ -897,7 +908,7 @@
             <ul class="list-group list-group-flush" id="posts-list" aria-live="polite"></ul>
             <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
               <span class="small text-body-secondary" id="posts-page-info"></span>
-              <nav aria-label="Posts pages">
+              <nav aria-label="List pages">
                 <ul class="pagination pagination-sm mb-0" id="posts-pagination"></ul>
               </nav>
             </div>

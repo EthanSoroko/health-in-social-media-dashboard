@@ -11,8 +11,9 @@
  * Dashboard (index.html)
  *
  * Loads data/subreddits.json and each ready community's files from data/subreddits/<name>/
- * (format: data/README.md), then draws everything for the community picked in the header:
- * - Stat cards with posts-per-year sparklines
+ * (format: data/README.md), then draws everything for the community picked in the header,
+ * for either its posts or its comments (the Posts | Comments toggle):
+ * - Stat cards with per-year sparklines
  * - Main chart (posts per month), poster/post type doughnuts, posts list and predictions chart
  * - Compare Communities table (all ready communities side by side)
  *
@@ -68,7 +69,7 @@ const createElement = (tag, className = '', text = '') => {
 
 // ---------------------------------------------------------------------------
 // Data loading: data/subreddits.json lists the communities; each ready one has
-// data/subreddits/<name>/posts.json and, if "predictions" is true, predictions.json
+// data/subreddits/<name>/posts.json and, if listed as available, predictions.json and comments.json
 // ---------------------------------------------------------------------------
 const fetchJSON = async path => {
   const response = await fetch(path, {cache: 'no-cache'});
@@ -93,22 +94,54 @@ const colorsFor = order => {
 
 const loadSubreddit = async subreddit => {
   const folder = `data/subreddits/${encodeURIComponent(subreddit.name)}`;
-  const [postsFile, predictionsFile] = await Promise.all([
+  const [postsFile, predictionsFile, commentsFile] = await Promise.all([
     fetchJSON(`${folder}/posts.json`),
-    // Only requested when listed, so a community without predictions doesn't log a 404
-    subreddit.predictions ? fetchJSON(`${folder}/predictions.json`) : null
+    // Optional files are only requested when listed, so a community without them doesn't log a 404
+    subreddit.predictions ? fetchJSON(`${folder}/predictions.json`) : null,
+    subreddit.comments ? fetchJSON(`${folder}/comments.json`) : null
   ]);
   if (!Array.isArray(postsFile?.posts) || postsFile.posts.length === 0) {
     throw new Error(`${folder}/posts.json has no posts`);
   }
 
-  // Oldest first (the sort is stable, so posts on the same day keep their file order)
+  // Oldest first (the sort is stable, so posts on the same day keep their file order).
+  // A post's id is its "id" field, or else Reddit's id from its link (comments refer to posts by it).
   const posts = postsFile.posts
-    .map(post => ({...post, what: [].concat(post.what ?? []), time: parseISODate(post.date)}))
+    .map(post => ({
+      ...post,
+      id: post.id ?? post.url?.match(/\/comments\/([a-z0-9]+)\//i)?.[1],
+      what: [].concat(post.what ?? []),
+      time: parseISODate(post.date)
+    }))
     .sort((a, b) => a.time - b.time);
   const range = postsFile.range ?? {start: posts[0].date, end: posts.at(-1).date};
   const whoOrder = postsFile.who_order ?? unique(posts.map(post => post.who));
   const whatOrder = postsFile.what_order ?? unique(posts.flatMap(post => post.what));
+  const postsById = new Map(posts.filter(post => post.id).map(post => [post.id, post]));
+
+  // Comments (optional): only those whose post is in posts.json are used
+  let comments = null;
+  if (commentsFile) {
+    comments = (commentsFile.comments ?? [])
+      .filter(comment => postsById.has(comment.post_id))
+      .map(comment => ({
+        ...comment,
+        post: postsById.get(comment.post_id),
+        what: [].concat(comment.what ?? []),
+        time: parseISODate(comment.date)
+      }))
+      .sort((a, b) => a.time - b.time);
+  }
+  const commentsByPost = new Map();
+  for (const comment of comments ?? []) {
+    if (!commentsByPost.has(comment.post_id)) {
+      commentsByPost.set(comment.post_id, []);
+    }
+    commentsByPost.get(comment.post_id).push(comment);
+  }
+  // Comment labels are optional; orders start with the posts' so a category keeps its color
+  const commentWhoOrder = unique([...whoOrder, ...(comments ?? []).map(comment => comment.who).filter(Boolean)]);
+  const commentWhatOrder = unique([...whatOrder, ...(comments ?? []).flatMap(comment => comment.what)]);
 
   return {
     ...subreddit,
@@ -120,6 +153,19 @@ const loadSubreddit = async subreddit => {
     whatOrder,
     whoColors: colorsFor(whoOrder),
     whatColors: colorsFor(whatOrder),
+    comments: comments?.length ? comments : null,
+    commentsByPost,
+    commentsHaveWho: Boolean(comments?.some(comment => comment.who)),
+    commentsHaveWhat: Boolean(comments?.some(comment => comment.what.length > 0)),
+    commentWhoOrder,
+    commentWhatOrder,
+    commentWhoColors: colorsFor(commentWhoOrder),
+    commentWhatColors: colorsFor(commentWhatOrder),
+    // Comments can come after the last post, so their date range can run later
+    commentRange: comments?.length ? {
+      start: [range.start, comments[0].date].sort()[0],
+      end: [range.end, comments.at(-1).date].sort()[1]
+    } : range,
     predictions: predictionsFile && {
       models: predictionsFile.models,
       categories: predictionsFile.categories,
@@ -133,8 +179,9 @@ const loadSubreddit = async subreddit => {
 // ---------------------------------------------------------------------------
 
 // Wires up the `<prefix>-from`, `<prefix>-to`, `<prefix>-reset` and `<prefix>-error` elements.
-// Calls onChange(from, to) with a valid range (UTC timestamps) clamped to the community's period.
-// setBounds(community) switches to another community's period and resets the inputs.
+// Calls onChange(from, to) with a valid range (UTC timestamps) clamped to the data's period.
+// setBounds({start, end}) sets that period (YYYY-MM-DD) and resets the inputs to it, unless
+// keepValues is set and the dates were changed (then they stay and are clamped to the new period).
 const createDateRange = (prefix, onChange) => {
   const fromInput = document.getElementById(`${prefix}-from`);
   const toInput = document.getElementById(`${prefix}-to`);
@@ -159,10 +206,10 @@ const createDateRange = (prefix, onChange) => {
       showError('The start date must be on or before the end date.');
       return;
     }
-    const from = Math.max(parseISODate(fromInput.value), bounds.start);
-    const to = Math.min(parseISODate(toInput.value), bounds.end);
+    const from = Math.max(parseISODate(fromInput.value), parseISODate(bounds.start));
+    const to = Math.min(parseISODate(toInput.value), parseISODate(bounds.end));
     if (from > to) {
-      showError(`Data covers ${formatRange(bounds.start, bounds.end)}.`);
+      showError(`Data covers ${formatRange(parseISODate(bounds.start), parseISODate(bounds.end))}.`);
       return;
     }
     showError('');
@@ -170,8 +217,8 @@ const createDateRange = (prefix, onChange) => {
   };
 
   const reset = () => {
-    fromInput.value = bounds.range.start;
-    toInput.value = bounds.range.end;
+    fromInput.value = bounds.start;
+    toInput.value = bounds.end;
     update();
   };
 
@@ -181,45 +228,87 @@ const createDateRange = (prefix, onChange) => {
   document.getElementById(`${prefix}-reset`).addEventListener('click', () => bounds && reset());
 
   return {
-    setBounds(community) {
-      bounds = community;
+    setBounds(range, {keepValues = false} = {}) {
+      const previous = bounds;
+      bounds = range;
       for (const input of [fromInput, toInput]) {
-        input.min = community.range.start;
-        input.max = community.range.end;
+        input.min = range.start;
+        input.max = range.end;
       }
-      reset();
+      if (keepValues && previous && fromInput.value && toInput.value) {
+        // A date left at the edge of the old period moves to the edge of the new one;
+        // chosen dates stay, kept inside the new period (ISO dates compare as strings)
+        const clamp = value => [range.start, value, range.end].sort()[1];
+        fromInput.value = fromInput.value === previous.start ? range.start : clamp(fromInput.value);
+        toInput.value = toInput.value === previous.end ? range.end : clamp(toInput.value);
+        update();
+      } else {
+        reset();
+      }
     }
   };
 };
 
-// The community currently shown (set by showSubreddit)
+// The community currently shown (set by showSubreddit) and whether posts or comments are shown
 let current = null;
+let mode = 'posts';
+const isComments = () => mode === 'comments';
+const NOT_AVAILABLE = 'Not available for comments yet.';
+
+// What the charts and list count in the current mode (null: no comment data for this community)
+const items = () => (isComments() ? current.comments : current.posts);
+const itemWord = () => (isComments() ? 'comment' : 'post');
+const modeRange = () => (isComments() ? current.commentRange : current.range);
+
+// Shows a section's content, or its "Not available for comments yet." message
+const setAvailable = (key, available) => {
+  for (const element of document.querySelectorAll(`[data-mode-content="${key}"]`)) {
+    element.classList.toggle('d-none', !available);
+  }
+  for (const element of document.querySelectorAll(`[data-mode-na="${key}"]`)) {
+    element.classList.toggle('d-none', available);
+  }
+};
+
+// Swaps titles and labels marked with data-comments-text / data-comments-aria
+const applyModeText = () => {
+  for (const element of document.querySelectorAll('[data-comments-text]')) {
+    element.dataset.postsText ??= element.textContent;
+    element.textContent = isComments() ? element.dataset.commentsText : element.dataset.postsText;
+  }
+  for (const element of document.querySelectorAll('[data-comments-aria]')) {
+    element.dataset.postsAria ??= element.getAttribute('aria-label');
+    element.setAttribute('aria-label', isComments() ? element.dataset.commentsAria : element.dataset.postsAria);
+  }
+};
 
 // ---------------------------------------------------------------------------
 // Stat cards
 // ---------------------------------------------------------------------------
-const postsPerYear = community => {
+// Count per calendar year over a period ({start, end} as YYYY-MM-DD), including empty years
+const countPerYear = (list, range) => {
   const years = [];
-  for (let year = yearOf(community.start); year <= yearOf(community.end); year++) {
+  for (let year = Number(range.start.slice(0, 4)); year <= Number(range.end.slice(0, 4)); year++) {
     years.push(year);
   }
   const counts = new Map(years.map(year => [year, 0]));
-  for (const post of community.posts) {
-    const year = yearOf(post.time);
+  for (const item of list) {
+    const year = yearOf(item.time);
     counts.set(year, (counts.get(year) || 0) + 1);
   }
   return {years, counts: years.map(year => counts.get(year))};
 };
+const busiestOf = ({years, counts}) => {
+  const index = counts.indexOf(Math.max(...counts));
+  return {year: years[index], count: counts[index]};
+};
+const postsPerYear = community => countPerYear(community.posts, community.range);
 
 // Every post has a numeric comment count, so the total is meaningful
 const hasCommentData = community => community.posts.every(post => Number.isFinite(post.comments));
 const totalComments = community => community.posts.reduce((sum, post) => sum + post.comments, 0);
-const patientShare = community => community.posts.filter(post => post.who === 'Patient').length / community.posts.length;
-const busiestYear = community => {
-  const {years, counts} = postsPerYear(community);
-  const index = counts.indexOf(Math.max(...counts));
-  return {year: years[index], count: counts[index]};
-};
+const patientShare = list => list.filter(item => item.who === 'Patient').length / list.length;
+const busiestYear = community => busiestOf(postsPerYear(community));
 
 // Sparklines follow the CoreUI template's widget cards: line, line, area, bar.
 // Line color follows the card's text color (white on maroon, dark on gold).
@@ -280,34 +369,58 @@ const sparklines = [
   createSparkline('card-chart4', 'bar')
 ];
 
-const updateStatCards = community => {
-  const {years, counts} = postsPerYear(community);
+const setStat = (id, value, label) => {
+  document.getElementById(id).textContent = value;
+  document.getElementById(`${id}-label`).textContent = label;
+};
+
+const updateSparklines = ({years, counts}, label) => {
   for (const chart of sparklines) {
     chart.data.labels = years.map(String);
+    chart.data.datasets[0].label = label;
     chart.data.datasets[0].data = counts;
     // Headroom so the line charts' points aren't clipped at the top of the card
-    chart.options.scales.y.max = chart.config.type === 'line' && !chart.data.datasets[0].fill ? Math.max(...counts) * 1.15 : undefined;
+    chart.options.scales.y.max = chart.config.type === 'line' && !chart.data.datasets[0].fill && counts.length > 0 ? Math.max(...counts) * 1.15 : undefined;
     chart.update();
   }
+};
 
-  document.getElementById('stat-posts').textContent = community.posts.length.toLocaleString('en-US');
-
-  // Comment counts come with each post; fall back to the test set size if they're missing
-  const second = document.getElementById('stat-second');
-  const secondLabel = document.getElementById('stat-second-label');
-  if (hasCommentData(community)) {
-    second.textContent = totalComments(community).toLocaleString('en-US');
-    secondLabel.textContent = 'Comments';
-  } else {
-    second.textContent = community.predictions ? community.predictions.posts.length.toLocaleString('en-US') : 'n/a';
-    secondLabel.textContent = 'Test posts';
+const updateStatCards = () => {
+  const community = current;
+  if (isComments()) {
+    const {comments} = community;
+    if (!comments) {
+      updateSparklines({years: [], counts: []}, 'Comments');
+      setStat('stat-first', 'n/a', 'Comments');
+      setStat('stat-second', 'n/a', 'Comments per post');
+      setStat('stat-patient-share', 'n/a', 'Patient commenters');
+      setStat('stat-busiest-year', 'n/a', 'Busiest year');
+      return;
+    }
+    const perYear = countPerYear(comments, community.commentRange);
+    const busiest = busiestOf(perYear);
+    updateSparklines(perYear, 'Comments');
+    setStat('stat-first', comments.length.toLocaleString('en-US'), 'Comments');
+    setStat('stat-second', (comments.length / community.posts.length).toFixed(1), 'Comments per post');
+    setStat('stat-patient-share', community.commentsHaveWho ? formatPercent(patientShare(comments)) : 'n/a', 'Patient commenters');
+    setStat('stat-busiest-year', String(busiest.year), `Busiest year, ${pluralize(busiest.count, 'comment')}`);
+    return;
   }
 
-  document.getElementById('stat-patient-share').textContent = formatPercent(patientShare(community));
+  const perYear = postsPerYear(community);
+  const busiest = busiestOf(perYear);
+  updateSparklines(perYear, 'Posts');
+  setStat('stat-first', community.posts.length.toLocaleString('en-US'), 'Posts');
 
-  const busiest = busiestYear(community);
-  document.getElementById('stat-busiest-year').textContent = String(busiest.year);
-  document.getElementById('stat-busiest-year-label').textContent = `Busiest year, ${pluralize(busiest.count, 'post')}`;
+  // Comment counts come with each post; fall back to the test set size if they're missing
+  if (hasCommentData(community)) {
+    setStat('stat-second', totalComments(community).toLocaleString('en-US'), 'Comments');
+  } else {
+    setStat('stat-second', community.predictions ? community.predictions.posts.length.toLocaleString('en-US') : 'n/a', 'Test posts');
+  }
+
+  setStat('stat-patient-share', formatPercent(patientShare(community.posts)), 'Patient posters');
+  setStat('stat-busiest-year', String(busiest.year), `Busiest year, ${pluralize(busiest.count, 'post')}`);
 };
 
 // ---------------------------------------------------------------------------
@@ -413,7 +526,7 @@ const swatch = color => {
   return element;
 };
 
-// Builds one doughnut with its legend table; returns update(order, colors, counts, postCount) → total counted
+// Builds one doughnut with its legend table; returns update(order, colors, counts, itemCount, word) → total counted
 const createBreakdown = prefix => {
   const legend = document.getElementById(`${prefix}-legend`);
   const center = document.getElementById(`${prefix}-center`);
@@ -448,7 +561,7 @@ const createBreakdown = prefix => {
     }
   });
 
-  return (order, colors, counts, postCount) => {
+  return (order, colors, counts, itemCount, word) => {
     const rows = order.map(name => ({name, count: counts.get(name) || 0}));
     const total = rows.reduce((sum, row) => sum + row.count, 0);
     chart.data.labels = order;
@@ -456,7 +569,7 @@ const createBreakdown = prefix => {
     chart.data.datasets[0].data = rows.map(row => row.count);
     chart.update();
 
-    center.replaceChildren(createElement('strong', '', postCount.toLocaleString('en-US')), createElement('span', '', postCount === 1 ? 'post' : 'posts'));
+    center.replaceChildren(createElement('strong', '', itemCount.toLocaleString('en-US')), createElement('span', '', itemCount === 1 ? word : `${word}s`));
 
     const legendRows = rows.filter(row => row.count > 0).map(row => {
       const tr = createElement('tr');
@@ -467,7 +580,7 @@ const createBreakdown = prefix => {
     });
     if (legendRows.length === 0) {
       const tr = createElement('tr');
-      tr.append(createElement('td', 'text-body-secondary', 'No posts in this range.'));
+      tr.append(createElement('td', 'text-body-secondary', `No ${word}s in this range.`));
       legendRows.push(tr);
     }
     const tbody = createElement('tbody');
@@ -482,73 +595,176 @@ const updateWhatBreakdown = createBreakdown('what');
 const breakdownSubtitle = document.getElementById('breakdown-subtitle');
 const whatNote = document.getElementById('what-note');
 
-const updateBreakdowns = (posts, from, to) => {
+// Poster/post type doughnuts for the posts or comments in range. Comments only get a doughnut
+// when they carry that label ("who" / "what"); otherwise it says it's not available.
+const updateBreakdowns = (list, from, to) => {
+  const word = itemWord();
+  const hasWho = !isComments() || current.commentsHaveWho;
+  const hasWhat = !isComments() || current.commentsHaveWhat;
+  setAvailable('who', hasWho);
+  setAvailable('what', hasWhat);
+
   const whoCounts = new Map();
   const whatCounts = new Map();
-  for (const post of posts) {
-    whoCounts.set(post.who, (whoCounts.get(post.who) || 0) + 1);
-    for (const what of post.what) {
+  for (const item of list) {
+    if (item.who) {
+      whoCounts.set(item.who, (whoCounts.get(item.who) || 0) + 1);
+    }
+    for (const what of item.what) {
       whatCounts.set(what, (whatCounts.get(what) || 0) + 1);
     }
   }
-  updateWhoBreakdown(current.whoOrder, current.whoColors, whoCounts, posts.length);
-  const labelTotal = updateWhatBreakdown(current.whatOrder, current.whatColors, whatCounts, posts.length);
-
-  // A few posts have more than one post type, so that doughnut counts labels rather than posts
-  const multiLabel = posts.filter(post => post.what.length > 1).length;
-  whatNote.textContent = labelTotal > posts.length ?
-    `Counts labels, not posts: ${multiLabel} ${multiLabel === 1 ? 'post has' : 'posts have'} more than one post type.` :
-    '';
-  breakdownSubtitle.textContent = `${formatRange(from, to)}, ${pluralize(posts.length, 'post')}`;
+  if (hasWho) {
+    updateWhoBreakdown(...(isComments() ? [current.commentWhoOrder, current.commentWhoColors] : [current.whoOrder, current.whoColors]), whoCounts, list.length, word);
+  }
+  whatNote.textContent = '';
+  if (hasWhat) {
+    const labelTotal = updateWhatBreakdown(...(isComments() ? [current.commentWhatOrder, current.commentWhatColors] : [current.whatOrder, current.whatColors]), whatCounts, list.length, word);
+    // A few posts have more than one post type, so that doughnut counts labels rather than posts
+    const multiLabel = list.filter(item => item.what.length > 1).length;
+    if (labelTotal > list.length) {
+      whatNote.textContent = `Counts labels, not ${word}s: ${pluralize(multiLabel, word)} ${multiLabel === 1 ? 'has' : 'have'} more than one ${word} type.`;
+    }
+  }
+  breakdownSubtitle.textContent = `${formatRange(from, to)}, ${pluralize(list.length, word)}`;
 };
 
 // ---------------------------------------------------------------------------
-// Posts list: 10 per page, filterable (follows the line chart's date range)
+// List of posts or comments: 10 per page, filterable (follows the line chart's date range)
 // ---------------------------------------------------------------------------
 const POSTS_PER_PAGE = 10;
+const COMMENT_PREVIEW_LENGTH = 400;
 const postsList = document.getElementById('posts-list');
 const postsSummary = document.getElementById('posts-summary');
 const postsPageInfo = document.getElementById('posts-page-info');
 const postsPagination = document.getElementById('posts-pagination');
 const postsWhoSelect = document.getElementById('posts-who');
 const postsWhatSelect = document.getElementById('posts-what');
-const postsState = {inRange: [], page: 1};
+const postsState = {inRange: [], page: 1, expanded: new Set()};
 
-// Refills a filter dropdown with a community's categories, keeping its "All ..." first option
-const setFilterOptions = (select, names) => {
-  select.length = 1;
+// Refills a filter dropdown with categories under an "All ..." option; no categories disables it
+const setFilterOptions = (select, allLabel, names) => {
+  select.replaceChildren(new Option(allLabel, ''));
   for (const name of names) {
     select.add(new Option(name, name));
   }
   select.value = '';
+  select.disabled = names.length === 0;
+};
+
+const updateFilters = () => {
+  if (isComments()) {
+    // Only the types the comments actually use
+    const used = new Set(current.comments?.flatMap(comment => [comment.who, ...comment.what]) ?? []);
+    setFilterOptions(postsWhoSelect, 'All commenter types', current.commentWhoOrder.filter(name => used.has(name)));
+    setFilterOptions(postsWhatSelect, 'All comment types', current.commentWhatOrder.filter(name => used.has(name)));
+  } else {
+    setFilterOptions(postsWhoSelect, 'All poster types', current.whoOrder);
+    setFilterOptions(postsWhatSelect, 'All post types', current.whatOrder);
+  }
 };
 
 const postBadge = (label, variant) => createElement('span', `badge text-bg-${variant}`, label);
+const shorten = text => (text.length > COMMENT_PREVIEW_LENGTH ? `${text.slice(0, COMMENT_PREVIEW_LENGTH).trimEnd()}…` : text);
+const scoreText = score => (Number.isFinite(score) ? pluralize(score, 'point') : '');
+
+// Reddit links only; anything else stays plain text
+const linkIfReddit = (element, url) => {
+  if (/^https:\/\/(www\.)?reddit\.com\//.test(url ?? '')) {
+    element.href = url;
+    element.target = '_blank';
+    element.rel = 'noopener noreferrer';
+  }
+  return element;
+};
+
+const itemMeta = item => {
+  const meta = createElement('div', 'd-flex flex-wrap align-items-center gap-2 small text-body-secondary my-1');
+  meta.append(createElement('span', '', formatDate(item.time, SHORT_DATE)));
+  if (item.who) {
+    meta.append(postBadge(item.who, 'primary'));
+  }
+  meta.append(...item.what.map(what => postBadge(what, 'info')));
+  return meta;
+};
+
+// A post's comments as a thread: replies sit under the comment they answer
+const commentThread = post => {
+  const comments = current.commentsByPost.get(post.id) ?? [];
+  const ids = new Set(comments.map(comment => comment.id).filter(Boolean));
+  const replies = new Map();
+  for (const comment of comments) {
+    const parent = comment.parent_id && ids.has(comment.parent_id) ? comment.parent_id : null;
+    if (!replies.has(parent)) {
+      replies.set(parent, []);
+    }
+    replies.get(parent).push(comment);
+  }
+  const renderLevel = (parent, depth) => {
+    // Indent replies, but stop indenting after a few levels so deep threads stay readable
+    const list = createElement('ul', `list-unstyled mb-0${depth > 0 && depth <= 4 ? ' ms-3' : ''}`);
+    for (const comment of replies.get(parent) ?? []) {
+      const item = createElement('li', 'mt-2');
+      item.append(itemMeta(comment), createElement('div', '', comment.body ?? ''));
+      const score = scoreText(comment.score);
+      if (score) {
+        item.append(createElement('div', 'small text-body-secondary', score));
+      }
+      if (comment.id && replies.has(comment.id)) {
+        item.append(renderLevel(comment.id, depth + 1));
+      }
+      list.append(item);
+    }
+    return list;
+  };
+  const thread = renderLevel(null, 0);
+  thread.id = `comments-${post.id}`;
+  return thread;
+};
 
 const postItem = post => {
   const item = createElement('li', 'list-group-item py-3');
-  const title = createElement('a', 'post-title', post.title || '(untitled post)');
-  if (/^https:\/\/(www\.)?reddit\.com\//.test(post.url)) {
-    title.href = post.url;
-    title.target = '_blank';
-    title.rel = 'noopener noreferrer';
-  }
-
-  const meta = createElement('div', 'd-flex flex-wrap align-items-center gap-2 small text-body-secondary my-1');
-  meta.append(
-    createElement('span', '', formatDate(post.time, SHORT_DATE)),
-    postBadge(post.who, 'primary'),
-    ...post.what.map(what => postBadge(what, 'info'))
-  );
-
-  item.append(title, meta);
+  item.append(linkIfReddit(createElement('a', 'post-title', post.title || '(untitled post)'), post.url), itemMeta(post));
   if (post.snippet) {
     item.append(createElement('p', 'mb-1', post.snippet));
   }
-  const stats = [Number.isFinite(post.score) && pluralize(post.score, 'point'), Number.isFinite(post.comments) && pluralize(post.comments, 'comment')].filter(Boolean);
+  const stats = [scoreText(post.score), Number.isFinite(post.comments) && pluralize(post.comments, 'comment')].filter(Boolean);
   if (stats.length > 0) {
     item.append(createElement('div', 'small text-body-secondary', stats.join(', ')));
   }
+
+  // "View comments" only when this post has comments in the data
+  const commentCount = current.commentsByPost.get(post.id)?.length ?? 0;
+  if (commentCount > 0) {
+    const expanded = postsState.expanded.has(post.id);
+    const toggle = createElement('button', 'btn btn-link btn-sm p-0 mt-1', expanded ? 'Hide comments' : `View comments (${commentCount})`);
+    toggle.type = 'button';
+    toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.setAttribute('aria-controls', `comments-${post.id}`);
+    toggle.addEventListener('click', () => {
+      if (postsState.expanded.has(post.id)) {
+        postsState.expanded.delete(post.id);
+      } else {
+        postsState.expanded.add(post.id);
+      }
+      item.replaceWith(postItem(post));
+    });
+    item.append(createElement('div'));
+    item.lastChild.append(toggle);
+    if (expanded) {
+      item.append(commentThread(post));
+    }
+  }
+  return item;
+};
+
+const commentItem = comment => {
+  const item = createElement('li', 'list-group-item py-3');
+  item.append(itemMeta(comment), createElement('p', 'mb-1', shorten(comment.body ?? '')));
+  const footer = createElement('div', 'small text-body-secondary');
+  const score = scoreText(comment.score);
+  footer.append(score ? `${score}, on ` : 'On ', linkIfReddit(createElement('a', '', comment.post.title || '(untitled post)'), comment.post.url));
+  item.append(footer);
   return item;
 };
 
@@ -592,35 +808,36 @@ const renderPagination = pageCount => {
     return;
   }
   const {page} = postsState;
-  const items = [pageItem('‹', page - 1, {disabled: page === 1, ariaLabel: 'Previous page'})];
+  const pageItems = [pageItem('‹', page - 1, {disabled: page === 1, ariaLabel: 'Previous page'})];
   for (const number of visiblePages(page, pageCount)) {
     if (number === null) {
       const gap = createElement('li', 'page-item disabled');
       gap.append(createElement('span', 'page-link', '…'));
-      items.push(gap);
+      pageItems.push(gap);
     } else {
-      items.push(pageItem(String(number), number, {active: number === page, ariaLabel: `Page ${number}`}));
+      pageItems.push(pageItem(String(number), number, {active: number === page, ariaLabel: `Page ${number}`}));
     }
   }
-  items.push(pageItem('›', page + 1, {disabled: page === pageCount, ariaLabel: 'Next page'}));
-  postsPagination.replaceChildren(...items);
+  pageItems.push(pageItem('›', page + 1, {disabled: page === pageCount, ariaLabel: 'Next page'}));
+  postsPagination.replaceChildren(...pageItems);
 };
 
 function renderPosts() {
   const who = postsWhoSelect.value;
   const what = postsWhatSelect.value;
-  const matches = postsState.inRange.filter(post => (!who || post.who === who) && (!what || post.what.includes(what)));
+  const word = itemWord();
+  const matches = postsState.inRange.filter(item => (!who || item.who === who) && (!what || item.what.includes(what)));
   const pageCount = Math.max(1, Math.ceil(matches.length / POSTS_PER_PAGE));
   postsState.page = Math.min(Math.max(postsState.page, 1), pageCount);
 
   const start = (postsState.page - 1) * POSTS_PER_PAGE;
-  const pagePosts = matches.slice(start, start + POSTS_PER_PAGE);
-  postsList.replaceChildren(...(pagePosts.length > 0 ?
-    pagePosts.map(post => postItem(post)) :
-    [createElement('li', 'list-group-item py-4 text-center text-body-secondary', 'No posts match these filters in this date range.')]));
+  const pageMatches = matches.slice(start, start + POSTS_PER_PAGE);
+  postsList.replaceChildren(...(pageMatches.length > 0 ?
+    pageMatches.map(item => (isComments() ? commentItem(item) : postItem(item))) :
+    [createElement('li', 'list-group-item py-4 text-center text-body-secondary', `No ${word}s match these filters in this date range.`)]));
 
   postsPageInfo.textContent = matches.length > 0 ?
-    `Showing ${start + 1} to ${start + pagePosts.length} of ${pluralize(matches.length, 'post')}` :
+    `Showing ${start + 1} to ${start + pageMatches.length} of ${pluralize(matches.length, word)}` :
     '';
   renderPagination(pageCount);
 }
@@ -632,8 +849,8 @@ for (const select of [postsWhoSelect, postsWhatSelect]) {
   });
 }
 
-const updatePostsList = (posts, from, to) => {
-  postsState.inRange = [...posts].reverse(); // newest first
+const updatePostsList = (list, from, to) => {
+  postsState.inRange = [...list].reverse(); // newest first
   postsState.page = 1;
   postsSummary.textContent = `${formatRange(from, to)}, newest first`;
   renderPosts();
@@ -641,19 +858,35 @@ const updatePostsList = (posts, from, to) => {
 
 const mainChartSubtitle = document.getElementById('main-chart-subtitle');
 const mainRange = createDateRange('main-chart', (from, to) => {
-  const {labels, counts} = countPostsPerMonth(current.posts, from, to);
+  const list = items();
+  const word = itemWord();
+  const {labels, counts} = countPostsPerMonth(list, from, to);
   const total = counts.reduce((sum, count) => sum + count, 0);
   mainChart.data.labels = labels;
+  mainChart.data.datasets[0].label = isComments() ? 'Comments' : 'Posts';
   mainChart.data.datasets[0].data = counts;
   // With only a month or two there's no line to speak of, so show the points
   mainChart.data.datasets[0].pointRadius = counts.length < 3 ? 4 : 0;
   mainChart.update();
-  mainChartSubtitle.textContent = `${current.display_name}, ${formatRange(from, to)}, ${pluralize(total, 'post')}`;
+  mainChartSubtitle.textContent = `${current.display_name}, ${formatRange(from, to)}, ${pluralize(total, word)}`;
 
-  const postsInRange = current.posts.filter(post => post.time >= from && post.time <= to);
-  updateBreakdowns(postsInRange, from, to);
-  updatePostsList(postsInRange, from, to);
+  const inRange = list.filter(item => item.time >= from && item.time <= to);
+  updateBreakdowns(inRange, from, to);
+  updatePostsList(inRange, from, to);
 });
+
+// Comments view for a community without comment data: every section says so
+const showCommentsNotAvailable = () => {
+  for (const key of ['main', 'who', 'what']) {
+    setAvailable(key, false);
+  }
+  mainChartSubtitle.textContent = current.display_name;
+  breakdownSubtitle.textContent = '';
+  postsSummary.textContent = '';
+  postsPageInfo.textContent = '';
+  postsPagination.replaceChildren();
+  postsList.replaceChildren(createElement('li', 'list-group-item py-4 text-body-secondary', NOT_AVAILABLE));
+};
 
 // ---------------------------------------------------------------------------
 // Predictions chart: actual vs. predicted category counts for the test set
@@ -759,21 +992,22 @@ const predictionsDateRange = createDateRange('predictions-chart', (from, to) => 
   updatePredictionsChart();
 });
 
-const updatePredictionsSection = community => {
-  const hasPredictions = Boolean(community.predictions?.posts.length);
+// Predictions are for posts only; keepValues keeps the chosen dates and model (Posts | Comments toggle)
+const updatePredictionsSection = ({keepValues = false} = {}) => {
+  const community = current;
+  const hasPredictions = !isComments() && Boolean(community.predictions?.posts.length);
   predictionsControls.classList.toggle('d-none', !hasPredictions);
   predictionsContent.classList.toggle('d-none', !hasPredictions);
   predictionsEmpty.classList.toggle('d-none', hasPredictions);
   if (!hasPredictions) {
-    predictionsRange = null;
+    predictionsEmpty.textContent = isComments() ? NOT_AVAILABLE : 'No model predictions for this community yet.';
     predictionsSubtitle.textContent = community.display_name;
     return;
   }
-  predictionsModelSelect.length = 0;
-  for (const [index, model] of community.predictions.models.entries()) {
-    predictionsModelSelect.add(new Option(model.name, String(index)));
+  if (!keepValues || predictionsModelSelect.length !== community.predictions.models.length) {
+    predictionsModelSelect.replaceChildren(...community.predictions.models.map((model, index) => new Option(model.name, String(index))));
   }
-  predictionsDateRange.setBounds(community);
+  predictionsDateRange.setBounds(community.range, {keepValues});
 };
 
 // ---------------------------------------------------------------------------
@@ -797,7 +1031,7 @@ const renderCompare = communities => {
     rows: [
       ['Share of all posts', community => formatPercent(community.posts.length / allPosts)],
       ['Share of all comments', community => (hasCommentData(community) && allComments > 0 ? formatPercent(totalComments(community) / allComments) : 'n/a')],
-      ['Patient posters', community => formatPercent(patientShare(community))],
+      ['Patient posters', community => formatPercent(patientShare(community.posts))],
       ['Posts in busiest year', community => {
         const busiest = busiestYear(community);
         return `${formatPercent(busiest.count / community.posts.length)} (${busiest.year})`;
@@ -861,16 +1095,37 @@ const showLoadErrors = messages => {
   loadError.classList.toggle('d-none', messages.length === 0);
 };
 
+// Redraws everything for the current community and mode. keepValues keeps the chosen date
+// ranges (used when only the Posts | Comments toggle changed).
+const render = ({keepValues = false} = {}) => {
+  applyModeText();
+  updateStatCards();
+  postsState.expanded.clear();
+  updateFilters();
+  if (items()) {
+    setAvailable('main', true);
+    mainRange.setBounds(modeRange(), {keepValues});
+  } else {
+    showCommentsNotAvailable();
+  }
+  updatePredictionsSection({keepValues});
+};
+
 const showSubreddit = name => {
   current = loaded.get(name);
-  updateStatCards(current);
-  setFilterOptions(postsWhoSelect, current.whoOrder);
-  setFilterOptions(postsWhatSelect, current.whatOrder);
-  mainRange.setBounds(current);
-  updatePredictionsSection(current);
+  render();
 };
 
 subredditSelect.addEventListener('change', () => showSubreddit(subredditSelect.value));
+
+for (const radio of document.querySelectorAll('input[name="view-mode"]')) {
+  radio.addEventListener('change', () => {
+    mode = radio.value;
+    if (current) {
+      render({keepValues: true});
+    }
+  });
+}
 
 const init = async () => {
   let subreddits;
@@ -921,6 +1176,8 @@ const init = async () => {
 
   subredditSelect.disabled = false;
   subredditSelect.value = communities[0].name;
+  // The browser may restore the toggle after a reload, so start from whichever button is checked
+  mode = document.querySelector('input[name="view-mode"]:checked')?.value ?? 'posts';
   showSubreddit(communities[0].name);
   highlightCurrentSection();
 };

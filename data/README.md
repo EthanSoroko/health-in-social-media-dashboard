@@ -10,6 +10,7 @@ data/
     kallmann_syndrome/
       posts.json                   required
       predictions.json             optional (the "Actual vs. Predicted" chart)
+      comments.json                optional (the Comments view and "View comments" links)
       test_predictions.csv         source for predictions.json (not read by the page)
     XXY/                           add the same files here
 ```
@@ -21,11 +22,12 @@ The page loads its data with `fetch`, so serve it (`python3 -m http.server`) ins
 
 1. Create the folder `data/subreddits/XXY/`. The folder name must match `name` in step 3 exactly
    (case matters).
-2. Add `posts.json` to it, and `predictions.json` if you have model predictions (formats below).
+2. Add `posts.json` to it. Add `predictions.json` if you have model predictions, and
+   `comments.json` if you have comments (formats below).
 3. In `data/subreddits.json`, set `"ready": true` on its entry (or add an entry if it isn't listed):
 
    ```json
-   {"name": "XXY", "display_name": "r/XXY", "ready": true, "predictions": false}
+   {"name": "XXY", "display_name": "r/XXY", "ready": true, "predictions": false, "comments": true}
    ```
 
    | Field          | Meaning                                                                   |
@@ -34,6 +36,7 @@ The page loads its data with `fetch`, so serve it (`python3 -m http.server`) ins
    | `display_name` | Shown in the dropdown, subtitles and the Compare Communities table        |
    | `ready`        | `false` lists it as "(coming soon)" and disabled; `true` loads its files |
    | `predictions`  | `true` if the folder has `predictions.json`; leave it out or `false` otherwise |
+   | `comments`     | `true` if the folder has `comments.json`; leave it out or `false` otherwise |
 
    The first ready community in the list is the one shown when the page opens.
 4. Reload the page. The new community appears in the dropdown, and Compare Communities shows
@@ -48,7 +51,7 @@ The page loads its data with `fetch`, so serve it (`python3 -m http.server`) ins
   "who_order": ["Patient", "Researcher", "Advocate", "Family Member", "Doctor", "Unknown"],
   "what_order": ["Sharing Info", "Seeking Info", "Asking for Opinions", "Research"],
   "posts": [
-    {"date": "2016-02-07", "who": "Patient", "what": ["Sharing Info"], "title": "An apology", "snippet": "Sorry to everyone...", "score": 2, "comments": 0, "url": "https://www.reddit.com/r/kallmann_syndrome/comments/44k46b/an_apology/"}
+    {"id": "44k46b", "date": "2016-02-07", "who": "Patient", "what": ["Sharing Info"], "title": "An apology", "snippet": "Sorry to everyone...", "score": 2, "comments": 0, "url": "https://www.reddit.com/r/kallmann_syndrome/comments/44k46b/an_apology/"}
   ]
 }
 ```
@@ -64,6 +67,7 @@ Each post:
 
 | Field      | Required | Meaning                                                                                     |
 |------------|----------|---------------------------------------------------------------------------------------------|
+| `id`       | no       | Reddit's post id, the part after `/comments/` in the link (`44k46b`). Comments link to posts by it. If left out, it's read from `url`. |
 | `date`     | yes      | `YYYY-MM-DD`                                                                                |
 | `who`      | yes      | Poster type. Use `"Patient"` for patients: the "Patient posters" stat counts that exact value. Use `"Unknown"` when unclear (always shown in gray). |
 | `what`     | yes      | List of post types, usually one, for example `["Seeking Info"]`                            |
@@ -94,6 +98,42 @@ Without it, the "Actual vs. Predicted" section says there are no predictions for
 | `categories` | Bars on the chart, in order                                                                          |
 | `posts`      | One array per test post: `[date, actual category, prediction of model 1, prediction of model 2, ...]`, with predictions in `models` order |
 
+## comments.json (optional)
+
+Set `"comments": true` on the community in `data/subreddits.json` when you add this file. It
+fills the Comments side of the Posts | Comments toggle and adds a "View comments" link under
+each post that has comments here.
+
+```json
+{
+  "comments": [
+    {"id": "czq1ab2", "post_id": "44k46b", "parent_id": null, "date": "2016-02-08", "body": "Thanks for setting this up.", "score": 3, "who": "Patient", "what": ["Sharing Info"]},
+    {"id": "czq7cd4", "post_id": "44k46b", "parent_id": "czq1ab2", "date": "2016-02-09", "body": "Agreed!", "score": 1}
+  ]
+}
+```
+
+One object per comment, in any order:
+
+| Field       | Required | Meaning                                                                                       |
+|-------------|----------|-----------------------------------------------------------------------------------------------|
+| `id`        | yes      | Reddit's comment id. Replies point to it.                                                     |
+| `post_id`   | yes      | The `id` of the post it belongs to in `posts.json`. Comments on posts that aren't there are skipped. |
+| `parent_id` | no       | `id` of the comment this one replies to. `null` or left out for a direct reply to the post.  |
+| `date`      | yes      | `YYYY-MM-DD`                                                                                  |
+| `body`      | yes      | Comment text (plain text; long comments are shortened in the Comments list)                   |
+| `score`     | no       | Reddit score (number)                                                                         |
+| `who`       | no       | Commenter type, same values as posts' `who` (`"Patient"` feeds the "Patient commenters" stat) |
+| `what`      | no       | List of comment types, like posts' `what`                                                     |
+
+What the Comments view shows:
+
+- **Stat cards, Comments per Month and the Comments list** work from `id`, `post_id` and `date` alone.
+- **Commenter Type** and **Patient commenters** need `who` on the comments, and **Comment Type** needs `what`.
+  Without them, those parts say "Not available for comments yet."
+- **Actual vs. Predicted** is for posts only and always says "Not available for comments yet."
+- A community without `comments.json` says "Not available for comments yet." in every section.
+
 ## Building the files with the scripts
 
 For r/kallmann_syndrome both files were generated from the health-social-media-viz project's
@@ -106,4 +146,5 @@ python3 scripts/build_posts_data.py /path/to/viz/index.html XXY
 python3 scripts/build_predictions_data.py /path/to/viz/index.html XXY
 ```
 
-Otherwise, write the JSON files in the formats above any way you like.
+There's no script for `comments.json` yet. Otherwise, write the JSON files in the formats above
+any way you like.
