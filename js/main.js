@@ -782,3 +782,49 @@ setupDateRange('predictions-chart', (from, to) => {
   predictionsRange = [from, to];
   updatePredictionsChart();
 });
+
+// ---------- Dashboard header stats (computed from the data files) ----------
+document.getElementById('stat-posts').textContent = KALLMANN_POSTS.length.toLocaleString('en-US');
+document.getElementById('stat-span').textContent = `${formatDate(DATA_START, {month: 'short', year: 'numeric'})} – ${formatDate(DATA_END, {month: 'short', year: 'numeric'})}`;
+document.getElementById('stat-test-posts').textContent = KALLMANN_PREDICTION_POSTS.length.toLocaleString('en-US');
+
+// ---------- Sidebar jump links: highlight the section in view ----------
+const sectionLinks = [...document.querySelectorAll('[data-section-link]')];
+const sectionTargets = sectionLinks.map(link => document.querySelector(link.getAttribute('href')));
+
+const highlightCurrentSection = () => {
+  // The current section is the last one whose top has scrolled past a line just below where the
+  // jump links leave a section (or the last section, once the page is scrolled to the bottom).
+  const CURRENT_LINE = 120; // px from the top of the window; sections land at 24px (80px on small screens)
+  const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+  let current = 0;
+  for (const [index, target] of sectionTargets.entries()) {
+    if (target.getBoundingClientRect().top <= CURRENT_LINE) {
+      current = index;
+    }
+  }
+  if (atBottom) {
+    current = sectionTargets.length - 1;
+  }
+  for (const [index, link] of sectionLinks.entries()) {
+    link.classList.toggle('is-current', index === current);
+    if (index === current) {
+      link.setAttribute('aria-current', 'location');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  }
+};
+
+window.addEventListener('scroll', highlightCurrentSection, {passive: true});
+window.addEventListener('resize', highlightCurrentSection);
+highlightCurrentSection();
+
+// On small screens the sidebar covers the page, so close it after jumping to a section
+for (const link of sectionLinks) {
+  link.addEventListener('click', () => {
+    if (window.matchMedia('(max-width: 991.98px)').matches) {
+      coreui.Sidebar.getInstance(document.querySelector('#sidebar'))?.hide();
+    }
+  });
+}
